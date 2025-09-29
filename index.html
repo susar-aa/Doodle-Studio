@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DoodleStd - Bouncing Beat Ball Shorts</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Use Inter font family -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        
+        /* Default Dark Mode Variables */
+        :root {
+            --dynamic-accent: #fde68a; /* Default to yellow-400 */
+            --dynamic-shadow-color: 253, 230, 138; /* Default yellow RGB for shadows */
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* --- Dark Mode Base (Default) --- */
+        body[data-theme='dark'] {
+            background-color: #0d1117;
+            color: #ffffff;
+        }
+        body[data-theme='dark'] .hero-bg {
+            background: linear-gradient(135deg, #1f2937 0%, #0d1117 100%);
+        }
+
+        /* --- Light Mode Base --- */
+        body[data-theme='light'] {
+            background-color: #f3f4f6; /* gray-100 */
+            color: #1f2937; /* gray-800 */
+        }
+        body[data-theme='light'] .hero-bg {
+            background: linear-gradient(135deg, #e5e7eb 0%, #f3f4f6 100%);
+        }
+        body[data-theme='light'] .bg-gray-800\/50,
+        body[data-theme='light'] .bg-gray-800,
+        body[data-theme='light'] .bg-gray-900 {
+            background-color: #ffffff; 
+            border-color: #d1d5db;
+        }
+        body[data-theme='light'] .text-gray-400 {
+            color: #6b7280;
+        }
+        body[data-theme='light'] .bg-gray-700\/50 {
+            background-color: #f9fafb; 
+        }
+
+        /* --- Dynamic and CTA Styles --- */
+        .cta-button {
+            transition: all 0.3s ease;
+            /* Dynamic shadow based on JS-set variable */
+            box-shadow: 0 4px 15px rgba(var(--dynamic-shadow-color), 0.4);
+        }
+        .cta-button:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 6px 20px rgba(var(--dynamic-shadow-color), 0.6);
+        }
+        .dynamic-border {
+            border-color: var(--dynamic-accent);
+        }
+        .dynamic-text-color {
+            color: var(--dynamic-accent);
+        }
+
+        /* Custom spinner for loading state */
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-left-color: var(--dynamic-accent);
+            border-radius: 50%;
+            width: 1rem;
+            height: 1rem;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        /* Utility class for 9:16 aspect ratio (used for video thumbnails) */
+        .pb-9\/16 {
+            padding-bottom: 177.77%; /* Height / Width * 100 for 9:16 vertical */
+        }
+    </style>
+    <!-- Firebase Imports for Firestore & Auth -->
+    <script type="module">
+        // Updated to use v12.3.0 and include necessary Auth and Firestore functions
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js";
+        import { getFirestore, collection, onSnapshot, addDoc, serverTimestamp, setLogLevel } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+        
+        // Expose Firebase modules to global scope for use in the main script block
+        window.firebase = {
+            initializeApp,
+            auth: { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged },
+            firestore: { getFirestore, collection, onSnapshot, addDoc, serverTimestamp, setLogLevel }
+        };
+    </script>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Modern Channel Widget -->
+    <section class="bg-gray-800/50 p-4 border-b border-t border-gray-700">
+        <div class="max-w-6xl mx-auto flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <!-- Logo Image - Dynamically loaded via API -->
+                <img 
+                    id="channel-logo" 
+                    class="w-12 h-12 rounded-full object-cover shrink-0 bg-gray-600 border-2 dynamic-border" 
+                    alt="Doodle Studio Logo" 
+                    src="https://placehold.co/48x48/1f2937/ffffff?text=S"
+                    onerror="this.src='https://placehold.co/48x48/1f2937/ffffff?text=S'">
+                
+                <div>
+                    <p class="text-xl font-bold">Doodle Studio</p>
+                    <p id="widget-subscriber-count" class="text-sm text-gray-400">Loading subscribers...</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-4">
+                <!-- Theme Toggle Button -->
+                <button id="theme-toggle" class="p-2 rounded-full bg-gray-700 hover:bg-gray-600 transition duration-200">
+                    <svg id="sun-icon" class="w-6 h-6 text-yellow-400 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16.95 7.05a8 8 0 10-1.414 1.414"></path>
+                    </svg>
+                    <svg id="moon-icon" class="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                    </svg>
+                </button>
+
+                <!-- Prominent Subscribe Button -->
+                <a 
+                    href="https://www.youtube.com/@DoodleStd?sub_confirmation=1" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    class="px-5 py-2 text-sm font-semibold rounded-full bg-red-600 text-white hover:bg-red-500 transition duration-300 shadow-md"
+                >
+                    SUBSCRIBE
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Hero Section -->
+    <main class="flex-grow flex flex-col justify-center items-center py-16 px-4 hero-bg">
+        <div class="max-w-4xl text-center">
+            
+            <!-- Headline -->
+            <h2 class="text-5xl md:text-7xl font-black mb-4 leading-tight">
+                The Most <span class="dynamic-text-color">Satisfying Beats</span> Come From Bouncing Balls.
+            </h2>
+            
+            <!-- Subtitle/Hook -->
+            <p class="text-xl md:text-2xl text-gray-300 mb-10 max-w-2xl mx-auto">
+                Discover the hypnotic, rhythmic, and visually clean world of Bouncing Beat Ball Shorts—perfect for your quick-scroll escape.
+            </p>
+
+            <!-- Primary Call to Action (CTA) - IMPORTANT: Use the subscription link -->
+            <a 
+                href="https://www.youtube.com/@DoodleStd?sub_confirmation=1" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                class="cta-button inline-block px-12 py-4 text-2xl font-bold rounded-full uppercase tracking-wider 
+                       bg-yellow-400 text-gray-900 hover:bg-yellow-300 transition duration-300 transform"
+                style="background-color: var(--dynamic-accent);"
+            >
+                SUBSCRIBE NOW
+            </a>
+            <p class="mt-4 text-sm text-gray-400">Join the rhythm. Never miss a Short!</p>
+        </div>
+    </main>
+
+    <!-- Featured Short Embed (NEW SECTION) -->
+    <section class="py-16 px-4 bg-gray-900 border-t border-gray-800">
+        <div class="max-w-6xl mx-auto text-center">
+            <h3 class="text-3xl font-bold mb-12 dynamic-text-color">Featured Short: Our Latest Beat</h3>
+            
+            <div id="featured-short-container" class="flex justify-center">
+                 <!-- Placeholder for Featured Short -->
+                <div id="featured-short-loading" class="w-80 h-[32rem] flex items-center justify-center bg-gray-800 rounded-xl shadow-2xl">
+                    <span class="spinner text-white"></span>
+                    <p class="ml-3 text-gray-400">Loading best beat...</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Value Proposition & Live Stats Section -->
+    <section class="py-16 px-4 bg-gray-900 border-t border-gray-800">
+        <div class="max-w-6xl mx-auto">
+            
+            <!-- LIVE STATS SECTION - FETCHED VIA YOUTUBE API -->
+            <div class="text-center mb-16">
+                <h3 class="text-2xl font-semibold text-gray-300 mb-6">LIVE CHANNEL STATS</h3>
+                <!-- Adjusted to a clean 3-column grid -->
+                <div class="grid grid-cols-3 gap-4 max-w-xl mx-auto">
+                    
+                    <!-- Total Views -->
+                    <div class="p-4 bg-gray-700/50 rounded-xl">
+                        <p id="total-views" class="text-3xl font-extrabold text-cyan-400">
+                            <span class="spinner"></span>
+                        </p>
+                        <p class="text-sm text-gray-400 mt-1">Total Views</p>
+                    </div>
+
+                    <!-- Subscriber Count -->
+                    <div class="p-4 bg-gray-700/50 rounded-xl">
+                        <p id="subscriber-count" class="text-3xl font-extrabold dynamic-text-color">
+                            <span class="spinner"></span>
+                        </p>
+                        <p class="text-sm text-gray-400 mt-1">Subscribers</p>
+                    </div>
+
+                    <!-- Video Count -->
+                    <div class="p-4 bg-gray-700/50 rounded-xl">
+                        <p id="video-count" class="text-3xl font-extrabold text-purple-400">
+                            <span class="spinner"></span>
+                        </p>
+                        <p class="text-sm text-gray-400 mt-1">Total Videos</p>
+                    </div>
+                </div>
+            </div>
+            <!-- END LIVE STATS SECTION -->
+
+            <h3 class="text-3xl font-bold text-center mb-12 text-cyan-400">Why Watch DoodleStd Shorts?</h3>
+            <div class="grid md:grid-cols-3 gap-8 text-center">
+                <!-- Feature 1 -->
+                <div class="p-6 bg-gray-800 rounded-xl shadow-lg hover:shadow-cyan-500/30 transition duration-300">
+                    <div class="text-4xl mb-3 dynamic-text-color">🔊</div>
+                    <p class="text-xl font-semibold mb-2">Hypnotic ASMR Audio</p>
+                    <p class="text-gray-400">Unique sound design perfectly synchronized to every bounce and collision.</p>
+                </div>
+                <!-- Feature 2 -->
+                <div class="p-6 bg-gray-800 rounded-xl shadow-lg hover:shadow-purple-500/30 transition duration-300">
+                    <div class="text-4xl mb-3 text-purple-400">⏱️</div>
+                    <p class="text-xl font-semibold mb-2">Instant Satisfaction</p>
+                    <p class="text-gray-400">Videos are always Short, delivering an engaging visual treat in under 60 seconds.</p>
+                </div>
+                <!-- Feature 3 -->
+                <div class="p-6 bg-gray-800 rounded-xl shadow-lg hover:shadow-yellow-500/30 transition duration-300">
+                    <div class="text-4xl mb-3 text-cyan-400">✨</div>
+                    <p class="text-xl font-semibold mb-2">Clean, Crisp Visuals</p>
+                    <p class="text-gray-400">Geometric graphics and vibrant colors designed to be easy on the eyes and hard to stop watching.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Beat Challenge & Leaderboard Section (NEW FIREBASE FEATURE) -->
+    <section class="py-16 px-4 bg-gray-900 border-t border-gray-800">
+        <div class="max-w-6xl mx-auto">
+            <h3 class="text-3xl font-bold text-center mb-12 text-purple-400">The Beat Challenge: High Score Leaderboard</h3>
+
+            <div class="grid lg:grid-cols-2 gap-12">
+                <!-- Game Panel -->
+                <div class="p-6 bg-gray-800 rounded-xl shadow-2xl shadow-purple-500/20 text-center">
+                    <h4 class="text-2xl font-bold mb-4 dynamic-text-color">Rhythm Tapper</h4>
+                    <p class="text-gray-400 mb-6">Test your rhythm! Tap the ball as fast as you can in 10 seconds.</p>
+
+                    <div class="text-5xl font-extrabold mb-4">
+                        Score: <span id="game-score" class="dynamic-text-color">0</span>
+                    </div>
+                    <div class="text-lg font-medium mb-4 text-cyan-400">
+                        Time Left: <span id="game-timer">--s</span>
+                    </div>
+
+                    <!-- Game Button (Visual representation of the ball) -->
+                    <button id="game-button" class="w-32 h-32 rounded-full bg-red-600 flex items-center justify-center 
+                                                    text-white text-xl font-black mx-auto transform hover:scale-105 transition duration-100"
+                            onclick="recordHit()" disabled>
+                        <span id="game-message">Press START!</span>
+                    </button>
+
+                    <div class="flex justify-center space-x-4 mt-6">
+                        <button onclick="startGame()" class="px-6 py-3 bg-green-600 hover:bg-green-500 rounded-lg font-semibold transition duration-300">
+                            START GAME
+                        </button>
+                        <button id="save-score-btn" onclick="saveScore()" class="px-6 py-3 bg-yellow-600 hover:bg-yellow-500 rounded-lg font-semibold transition duration-300 hidden">
+                            SAVE SCORE
+                        </button>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-4">Your ID: <span id="current-user-id">Loading...</span></p>
+
+                </div>
+
+                <!-- Leaderboard Panel -->
+                <div class="p-6 bg-gray-800 rounded-xl shadow-2xl shadow-yellow-500/20">
+                    <h4 class="text-2xl font-bold mb-4 dynamic-text-color">Top Tappers</h4>
+                    <table class="min-w-full text-left rounded-lg overflow-hidden">
+                        <thead>
+                            <tr class="bg-gray-600 text-sm uppercase tracking-wider">
+                                <th class="p-3 w-1/6">Rank</th>
+                                <th class="p-3 w-4/6">Name</th>
+                                <th class="p-3 w-1/6">Score</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leaderboard-body" class="text-sm">
+                            <tr><td colspan="3" class="text-center py-4 text-gray-500">Loading leaderboard...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Latest Shorts Section (Dynamic) -->
+    <section class="py-16 px-4 bg-gray-900 border-t border-gray-800">
+        <div class="max-w-6xl mx-auto text-center">
+            <h3 class="text-3xl font-bold mb-12 dynamic-text-color">Latest 5 Beat Ball Shorts</h3>
+            
+            <div id="latest-shorts-container" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-5 gap-6 justify-items-center">
+                <!-- Status message is a placeholder before videos are loaded -->
+                <p id="shorts-status" class="col-span-full text-gray-400">Loading latest shorts...</p>
+            </div>
+
+            <!-- Secondary CTA below the grid -->
+            <a 
+                href="https://www.youtube.com/@DoodleStd/shorts" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                class="mt-12 inline-block px-8 py-3 text-xl font-semibold rounded-lg bg-purple-600 text-white 
+                       hover:bg-purple-500 transition duration-300 transform hover:scale-105"
+            >
+                Explore All Shorts on YouTube →
+            </a>
+        </div>
+    </section>
+
+    <!-- Playlists Section (Dynamic) -->
+    <section class="py-16 px-4 bg-gray-900 border-t border-gray-800">
+        <div class="max-w-6xl mx-auto text-center">
+            <h3 class="text-3xl font-bold mb-12 text-cyan-400">Organized Beats: Playlists</h3>
+            
+            <!-- Updated grid layout to better fit a small number of playlists -->
+            <div id="playlists-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6 justify-items-center">
+                <!-- Status message is a placeholder before playlists are loaded -->
+                <p id="playlists-status" class="col-span-full text-gray-400">Loading playlists...</p>
+            </div>
+
+            <!-- Secondary CTA below the grid -->
+            <a 
+                href="https://www.youtube.com/@DoodleStd/playlists" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                class="mt-12 inline-block px-8 py-3 text-xl font-semibold rounded-lg bg-yellow-600 text-white 
+                       hover:bg-yellow-500 transition duration-300 transform hover:scale-105"
+            >
+                View All Playlists →
+            </a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="p-8 bg-gray-800 border-t border-gray-700 text-center text-gray-400">
+        <div class="max-w-6xl mx-auto">
+            <p class="mb-4 text-lg font-medium">Bouncing Beats. Pure Satisfaction.</p>
+            
+            <div class="flex justify-center space-x-6">
+                <!-- YouTube Link -->
+                <a href="https://www.youtube.com/@DoodleStd" target="_blank" rel="noopener noreferrer" class="hover:text-red-500 transition duration-300">
+                    <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12.001 0a12 12 0 00-12 12 12 12 0 0012 12 12 12 0 0012-12 12 12 0 00-12-12zm6.39 16.39s-.236-1.554-1.026-2.344c-.79-.79-2.226-1.026-3.79-1.026h-3.13c-1.564 0-2.99.236-3.79 1.026-.79.79-1.026 2.344-1.026 2.344a1.88 1.88 0 00.126 1.487 1.88 1.88 0 001.487.892h10.43c.594 0 1.137-.248 1.487-.892a1.88 1.88 0 00.126-1.487zm-6.39-1.474c.945 0 1.71-.765 1.71-1.71s-.765-1.71-1.71-1.71-1.71.765-1.71 1.71.765 1.71 1.71 1.71zm0-3.13c1.72 0 3.13.72 3.13 1.42s-1.41 1.42-3.13 1.42-3.13-.72-3.13-1.42 1.41-1.42 3.13-1.42z"/>
+                        <path d="M12.001 3.52c4.64 0 8.48 3.84 8.48 8.48s-3.84 8.48-8.48 8.48-8.48-3.84-8.48-8.48 3.84-8.48 8.48-8.48z" fill="white" stroke="white" stroke-width="2"/>
+                    </svg>
+                </a>
+                <!-- Optional: Add other social links (e.g., Instagram, TikTok) here if you use them -->
+            </div>
+            
+            <p class="mt-8 text-sm">&copy; <script>document.write(new Date().getFullYear())</script> DoodleStd. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <!-- YouTube Data API & Firebase Script -->
+    <script type="module">
+        // --- Firebase Configuration ---
+        // Explicit configuration provided by the user.
+        const firebaseConfig = {
+            apiKey: "AIzaSyDWb0JNy_Ogf8ZB-SXVofol_6sfZvgY4qY",
+            authDomain: "doodle-studio-1bbdc.firebaseapp.com",
+            projectId: "doodle-studio-1bbdc",
+            storageBucket: "doodle-studio-1bbdc.firebasestorage.app",
+            messagingSenderId: "282494504927",
+            appId: "1:282494504927:web:e0abb99050144472377e6a",
+            measurementId: "G-NFWEHJTVE7"
+        };
+        
+        // Canvas environment variables (REQUIRED for pathing and authentication)
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        // --- API Configuration ---
+        const API_KEY = "AIzaSyCVR2yEuS5ZaqLV6nPCAXVsK5yU04WNiUk"; 
+        const CHANNEL_ID = "UCk4C4vuYLREz3ocUX1d-gfg"; 
+
+        // Firebase Service placeholders (accessible via window.firebase from the module script)
+        let db = null;
+        let auth = null;
+        let currentUserId = 'anonymous'; 
+
+        // DOM elements
+        const totalViewsEl = document.getElementById('total-views');
+        const subscriberCountEl = document.getElementById('subscriber-count');
+        const videoCountEl = document.getElementById('video-count');
+        const shortsStatusEl = document.getElementById('shorts-status');
+        const shortsContainerEl = document.getElementById('latest-shorts-container');
+        const playlistsStatusEl = document.getElementById('playlists-status');
+        const playlistsContainerEl = document.getElementById('playlists-container');
+        const widgetSubscriberCountEl = document.getElementById('widget-subscriber-count');
+        const channelLogoEl = document.getElementById('channel-logo');
+        const featuredShortContainerEl = document.getElementById('featured-short-container');
+        const featuredShortLoadingEl = document.getElementById('featured-short-loading');
+        
+        // Theme Elements
+        const themeToggleEl = document.getElementById('theme-toggle');
+        const sunIcon = document.getElementById('sun-icon');
+        const moonIcon = document.getElementById('moon-icon');
+
+        // Game Elements
+        const gameButton = document.getElementById('game-button');
+        const saveScoreBtn = document.getElementById('save-score-btn');
+        const leaderboardBodyEl = document.getElementById('leaderboard-body');
+        let score = 0;
+        let gameInterval;
+        
+        // --- Helper Functions ---
+
+        /** Converts RGB to a luminance for theme contrast check. */
+        function getLuminance(r, g, b) {
+            return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+        }
+
+        /** Formats numbers (e.g., 125000 -> 125K) */
+        function formatNumber(numString) {
+            const num = parseInt(numString);
+            if (isNaN(num)) return numString;
+            const format = (n, d) => (n / d).toFixed(1).replace(/\.0$/, '');
+            if (num >= 1000000) return format(num, 1000000) + 'M';
+            if (num >= 1000) return format(num, 1000) + 'K';
+            return num.toString();
+        }
+
+        // --- Theme Logic ---
+
+        function updateThemeIcons(theme) {
+            const isDark = theme === 'dark';
+            sunIcon.classList.toggle('hidden', isDark);
+            moonIcon.classList.toggle('hidden', !isDark);
+        }
+
+        function toggleTheme() {
+            const currentTheme = document.body.getAttribute('data-theme') || 'dark';
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.body.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeIcons(newTheme);
+        }
+
+        // Initialize theme on load
+        const storedTheme = localStorage.getItem('theme') || 'dark';
+        document.body.setAttribute('data-theme', storedTheme);
+        updateThemeIcons(storedTheme);
+        themeToggleEl.addEventListener('click', toggleTheme);
+        
+        // --- Dynamic Color Logic ---
+
+        /** Extracts the dominant color from a thumbnail URL and sets the dynamic CSS variables. */
+        function setDynamicAccent(imgUrl) {
+            const img = new Image();
+            img.crossOrigin = 'Anonymous'; 
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = 1; 
+                canvas.height = 1;
+                
+                try {
+                    ctx.drawImage(img, 0, 0, 1, 1);
+                    const data = ctx.getImageData(0, 0, 1, 1).data;
+                    const r = data[0], g = data[1], b = data[2];
+                    
+                    const colorRgb = `${r}, ${g}, ${b}`;
+                    const hexColor = '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
+                    
+                    // Set CSS variables
+                    document.documentElement.style.setProperty('--dynamic-accent', hexColor);
+                    document.documentElement.style.setProperty('--dynamic-shadow-color', colorRgb);
+
+                    // Check luminance and adjust CTA text color if needed (simple approximation)
+                    const luminance = getLuminance(r, g, b);
+                    const ctaButton = document.querySelector('.cta-button');
+                    if (ctaButton) {
+                        ctaButton.classList.toggle('text-white', luminance > 0.7); // If accent is light, make text dark
+                        ctaButton.classList.toggle('text-gray-900', luminance < 0.7);
+                    }
+                } catch (e) {
+                    console.error("Color analysis failed:", e);
+                    // Fallback to default yellow
+                    document.documentElement.style.setProperty('--dynamic-accent', '#fde68a');
+                    document.documentElement.style.setProperty('--dynamic-shadow-color', '253, 230, 138');
+                }
+            };
+            img.onerror = function() {
+                console.warn("Could not load thumbnail for color analysis.");
+            };
+            img.src = imgUrl;
+        }
+
+        // --- YouTube API Fetchers (Unchanged) ---
+        
+        async function fetchChannelData(API_KEY, CHANNEL_ID) {
+            const apiUrl = `https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics&id=${CHANNEL_ID}&key=${API_KEY}`;
+            const response = await fetch(apiUrl);
+            if (!response.ok) throw new Error(`Failed to fetch channel data: HTTP status ${response.status}`);
+            const data = await response.json();
+            if (data.items && data.items.length > 0) return data.items[0]; 
+            throw new Error("Channel data not found.");
+        }
+
+        async function fetchLatestShorts(API_KEY, CHANNEL_ID) {
+            const apiUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${CHANNEL_ID}&maxResults=5&order=date&type=video&key=${API_KEY}`;
+            const response = await fetch(apiUrl);
+            if (!response.ok) throw new Error(`Failed to fetch shorts: HTTP status ${response.status}`);
+            const data = await response.json();
+            return data.items;
+        }
+        
+        async function fetchPlaylists(API_KEY, CHANNEL_ID) {
+            const apiUrl = `https://www.googleapis.com/youtube/v3/playlists?part=snippet&channelId=${CHANNEL_ID}&maxResults=2&key=${API_KEY}`;
+            const response = await fetch(apiUrl);
+            if (!response.ok) throw new Error(`Failed to fetch playlists: HTTP status ${response.status}`);
+            const data = await response.json();
+            return data.items;
+        }
+
+        // --- Render Functions (Updated for Featured Short) ---
+
+        /** Renders the top video as a featured embed. */
+        function renderFeaturedShort(video) {
+            featuredShortLoadingEl.remove();
+
+            if (!video) {
+                featuredShortContainerEl.innerHTML = '<p class="text-gray-400">No featured short available.</p>';
+                return;
+            }
+
+            const videoId = video.id.videoId;
+            const title = video.snippet.title.replace(/\| Doodle Studio.*(Shorts)?/, '').trim(); 
+            
+            // YouTube embed URL for shorts
+            const embedUrl = `https://www.youtube.com/embed/${videoId}?rel=0&autoplay=0`; 
+
+            // Aspect ratio container for 9:16 video
+            featuredShortContainerEl.innerHTML = `
+                <div class="relative w-full max-w-sm mx-auto shadow-2xl rounded-xl overflow-hidden shadow-cyan-500/50">
+                    <div class="pb-9/16 relative">
+                        <iframe 
+                            class="absolute top-0 left-0 w-full h-full"
+                            src="${embedUrl}" 
+                            frameborder="0" 
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                            allowfullscreen
+                            title="${title}"
+                        ></iframe>
+                    </div>
+                    <p class="mt-3 text-lg font-semibold text-gray-400">"${title}"</p>
+                </div>
+            `;
+        }
+
+        /** Renders the fetched video items (latest 5) into the HTML container. (Unchanged logic) */
+        function renderShorts(videos) {
+            if (shortsStatusEl) shortsStatusEl.remove();
+
+            if (!videos || videos.length === 0) {
+                shortsContainerEl.innerHTML = '<p class="col-span-full text-gray-400">No recent shorts found.</p>';
+                return;
+            }
+
+            let htmlContent = '';
+            // Skip the first video as it's used for the featured embed (unless we check against the featured video ID)
+            // For simplicity, we just render the 5 latest videos fetched, including the one used in the featured section.
+            videos.forEach(item => {
+                const videoId = item.id.videoId;
+                const title = item.snippet.title.replace(/\| Doodle Studio.*(Shorts)?/, '').trim(); 
+                const thumbnailUrl = item.snippet.thumbnails.high.url;
+                const embedUrl = `https://www.youtube.com/watch?v=${videoId}`; 
+                
+                htmlContent += `
+                    <a href="${embedUrl}" target="_blank" rel="noopener noreferrer" 
+                       class="group block w-full max-w-[200px] hover:scale-[1.03] transition duration-300 ease-in-out transform">
+                        <div class="relative overflow-hidden rounded-xl shadow-lg shadow-cyan-500/30">
+                            <div class="pb-9/16 relative"> 
+                                <img src="${thumbnailUrl}" alt="${title}" class="absolute top-0 left-0 w-full h-full object-cover">
+                            </div>
+                            <div class="absolute inset-0 bg-gradient-to-t from-gray-900/80 to-transparent"></div>
+                            <p class="absolute bottom-0 left-0 p-3 text-xs font-semibold text-white text-left 
+                                      group-hover:text-yellow-400 transition duration-300">
+                                ${title}
+                            </p>
+                        </div>
+                    </a>
+                `;
+            });
+
+            shortsContainerEl.innerHTML = htmlContent;
+        }
+        
+        /** Renders the fetched playlist items (max 2) into the HTML container. (Unchanged logic) */
+        function renderPlaylists(playlists) {
+            if (playlistsStatusEl) playlistsStatusEl.remove();
+
+            if (!playlists || playlists.length === 0) {
+                playlistsContainerEl.innerHTML = '<p class="col-span-full text-gray-400">No public playlists found yet. Stay tuned!</p>';
+                return;
+            }
+
+            let htmlContent = '';
+            playlists.forEach(item => {
+                const playlistId = item.id;
+                const title = item.snippet.title.trim(); 
+                const thumbnailUrl = item.snippet.thumbnails.high.url;
+                const playlistUrl = `https://www.youtube.com/playlist?list=${playlistId}`; 
+                
+                htmlContent += `
+                    <a href="${playlistUrl}" target="_blank" rel="noopener noreferrer" 
+                       class="group block w-full hover:scale-[1.03] transition duration-300 ease-in-out transform">
+                        <div class="relative overflow-hidden rounded-xl shadow-lg shadow-yellow-500/30">
+                            <img src="${thumbnailUrl}" alt="Playlist: ${title}" class="w-full h-auto object-cover aspect-video">
+                            
+                            <div class="absolute inset-0 bg-gradient-to-t from-gray-900/80 to-transparent flex items-end">
+                                <p class="p-3 text-sm font-semibold text-white text-left 
+                                          group-hover:text-cyan-400 transition duration-300 truncate w-full">
+                                    ${title}
+                                </p>
+                            </div>
+                            <div class="absolute top-0 right-0 p-2 bg-black/50 rounded-bl-lg text-white text-xs font-bold flex items-center">
+                                <span class="mr-1">🎵</span>
+                                Playlist
+                            </div>
+                        </div>
+                    </a>
+                `;
+            });
+
+            playlistsContainerEl.innerHTML = htmlContent;
+        }
+
+        // --- Game Logic ---
+
+        function startGame() {
+            score = 0;
+            document.getElementById('game-score').textContent = '0';
+            document.getElementById('game-message').textContent = 'TAP NOW!';
+            saveScoreBtn.classList.add('hidden');
+            gameButton.disabled = false;
+            
+            let timeLeft = 10;
+            document.getElementById('game-timer').textContent = `${timeLeft}s`;
+
+            gameInterval = setInterval(() => {
+                timeLeft--;
+                document.getElementById('game-timer').textContent = `${timeLeft}s`;
+                if (timeLeft <= 0) {
+                    clearInterval(gameInterval);
+                    endGame();
+                }
+            }, 1000);
+        }
+
+        function recordHit() {
+            if (gameInterval) {
+                score++;
+                document.getElementById('game-score').textContent = score;
+                // Simple visual feedback
+                gameButton.classList.add('scale-110');
+                setTimeout(() => gameButton.classList.remove('scale-110'), 100);
+            }
+        }
+
+        function endGame() {
+            gameButton.disabled = true;
+            document.getElementById('game-message').textContent = `SCORE: ${score}`;
+            saveScoreBtn.classList.remove('hidden');
+        }
+
+        // --- Firestore Logic ---
+
+        async function initializeFirebase() {
+            if (window.firebase && firebaseConfig) {
+                const fire = window.firebase;
+                // 1. Initialize App using the explicit config
+                const firebaseApp = fire.initializeApp(firebaseConfig); 
+                
+                // 2. Get services
+                db = fire.firestore.getFirestore(firebaseApp);
+                auth = fire.auth.getAuth(firebaseApp);
+                
+                fire.firestore.setLogLevel('error'); // Set to 'error' to prevent excessive console spam
+
+                // Auth and set currentUserId
+                try {
+                    // 3. Use the Canvas token for authentication if available
+                    if (initialAuthToken) {
+                        await fire.auth.signInWithCustomToken(auth, initialAuthToken);
+                    } else {
+                        await fire.auth.signInAnonymously(auth);
+                    }
+                } catch (e) {
+                    console.error("Firebase Auth failed:", e);
+                }
+
+                fire.auth.onAuthStateChanged((user) => {
+                    currentUserId = user ? user.uid : (localStorage.getItem('anon_id') || crypto.randomUUID());
+                    if (!user) localStorage.setItem('anon_id', currentUserId);
+                    
+                    document.getElementById('current-user-id').textContent = currentUserId;
+                    loadLeaderboard(); 
+                });
+            } else {
+                console.warn("Firebase configuration or libraries not fully loaded. Leaderboard feature disabled.");
+                document.getElementById('leaderboard-body').innerHTML = '<tr><td colspan="3" class="text-center py-2 text-red-400">Leaderboard Disabled (No Firebase Config)</td></tr>';
+            }
+        }
+
+        async function saveScore() {
+            if (!db) return console.error("Firestore not initialized. Cannot save score.");
+            
+            const scoreToSave = score;
+            if (scoreToSave === 0) {
+                document.getElementById('game-message').textContent = "Score must be > 0 to save!";
+                return;
+            }
+
+            // Using the canvas-provided appId for pathing, which is required by security rules
+            const path = `artifacts/${appId}/public/data/scores`;
+            const scoresRef = firebase.firestore.collection(db, path);
+            
+            const playerName = prompt("Enter your name (max 10 chars):") || "Anon Tapper";
+            const displayName = playerName.substring(0, 10);
+            
+            try {
+                await firebase.firestore.addDoc(scoresRef, {
+                    userId: currentUserId,
+                    name: displayName,
+                    score: scoreToSave,
+                    timestamp: firebase.firestore.serverTimestamp()
+                });
+                document.getElementById('game-message').textContent = `Score saved by ${displayName}! Play again?`;
+                saveScoreBtn.classList.add('hidden'); // Hide button after saving
+            } catch (e) {
+                console.error("Error adding document: ", e);
+                document.getElementById('game-message').textContent = "Error saving score.";
+            }
+        }
+
+        function loadLeaderboard() {
+            if (!db) return;
+            
+            // Using the canvas-provided appId for pathing, which is required by security rules
+            const path = `artifacts/${appId}/public/data/scores`;
+            const scoresRef = firebase.firestore.collection(db, path);
+            leaderboardBodyEl.innerHTML = '<tr><td colspan="3" class="text-center py-2 text-gray-500">Loading leaderboard...</td></tr>';
+
+            try {
+                // Attach real-time listener
+                firebase.firestore.onSnapshot(scoresRef, (snapshot) => {
+                    const scores = [];
+                    snapshot.forEach((doc) => {
+                        const data = doc.data();
+                        scores.push({
+                            id: doc.id,
+                            name: data.name || 'Anon',
+                            score: data.score || 0,
+                            userId: data.userId || 'N/A'
+                        });
+                    });
+
+                    // Sort locally by score descending (top 10)
+                    scores.sort((a, b) => b.score - a.score);
+                    const topScores = scores.slice(0, 10);
+
+                    let html = '';
+                    if (topScores.length === 0) {
+                         html = '<tr><td colspan="3" class="text-center py-2 text-gray-500">No scores posted yet!</td></tr>';
+                    } else {
+                        topScores.forEach((s, index) => {
+                            const rowClass = s.userId === currentUserId ? 'bg-cyan-900/50' : (index % 2 === 0 ? 'bg-gray-800' : 'bg-gray-700');
+                            
+                            html += `
+                                <tr class="${rowClass} hover:bg-gray-600 transition duration-150">
+                                    <td class="p-3 font-bold">${index + 1}</td>
+                                    <td class="p-3 truncate">${s.name}</td>
+                                    <td class="p-3 font-extrabold dynamic-text-color">${s.score}</td>
+                                </tr>
+                            `;
+                        });
+                    }
+                    leaderboardBodyEl.innerHTML = html;
+                }, (error) => {
+                    console.error("Error getting leaderboard: ", error);
+                    leaderboardBodyEl.innerHTML = '<tr><td colspan="3" class="text-center py-2 text-red-400">Error loading leaderboard.</td></tr>';
+                });
+
+            } catch (e) {
+                console.error("Error setting up leaderboard snapshot:", e);
+            }
+        }
+        
+        // --- Main Execution ---
+
+        async function fetchYouTubeData() {
+            if (API_KEY === "YOUR_YOUTUBE_API_KEY" || CHANNEL_ID === "YOUR_YOUTUBE_CHANNEL_ID") {
+                console.error("API key or Channel ID is missing or incorrect. Please check the script configuration.");
+                // Set default errors/N/A
+                totalViewsEl.innerHTML = 'N/A';
+                subscriberCountEl.innerHTML = 'N/A';
+                videoCountEl.innerHTML = 'N/A';
+                if (widgetSubscriberCountEl) widgetSubscriberCountEl.textContent = 'Setup API Keys';
+                featuredShortContainerEl.innerHTML = '<p class="text-red-400">API Setup Required.</p>';
+                if (shortsStatusEl) shortsStatusEl.textContent = "API configuration error. Cannot load content.";
+                if (playlistsStatusEl) playlistsStatusEl.textContent = "API configuration error. Cannot load content.";
+                return;
+            }
+            
+            try {
+                const [channelData, videos, playlists] = await Promise.all([
+                    fetchChannelData(API_KEY, CHANNEL_ID),
+                    fetchLatestShorts(API_KEY, CHANNEL_ID),
+                    fetchPlaylists(API_KEY, CHANNEL_ID) 
+                ]);
+
+                const stats = channelData.statistics;
+                const snippet = channelData.snippet;
+
+                // 1. Update Stats & Widget
+                totalViewsEl.textContent = formatNumber(stats.viewCount);
+                const formattedSubs = stats.hiddenSubscriberCount ? 'Hidden' : formatNumber(stats.subscriberCount);
+                subscriberCountEl.textContent = formattedSubs;
+                videoCountEl.textContent = formatNumber(stats.videoCount);
+                if (widgetSubscriberCountEl) {
+                    widgetSubscriberCountEl.textContent = `${formattedSubs} Subscribers`;
+                }
+
+                // 2. Update Channel Logo
+                if (channelLogoEl && snippet.thumbnails?.high?.url) {
+                    channelLogoEl.src = snippet.thumbnails.high.url;
+                }
+                
+                // 3. Dynamic Color Accent (Uses the thumbnail of the first latest short)
+                if (videos.length > 0 && videos[0].snippet.thumbnails?.high?.url) {
+                    setDynamicAccent(videos[0].snippet.thumbnails.high.url);
+                }
+
+                // 4. Render Featured Short (Latest one)
+                renderFeaturedShort(videos[0]);
+
+                // 5. Render Latest Shorts Grid
+                renderShorts(videos);
+                
+                // 6. Render Playlists
+                renderPlaylists(playlists);
+
+            } catch (error) {
+                console.error("Critical Error fetching YouTube data:", error);
+                
+                totalViewsEl.innerHTML = 'Error';
+                subscriberCountEl.innerHTML = 'Error';
+                videoCountEl.innerHTML = 'Error';
+                if (widgetSubscriberCountEl) widgetSubscriberCountEl.textContent = 'Error loading stats';
+                
+                // Content error messages
+                if (featuredShortLoadingEl) featuredShortLoadingEl.remove();
+                featuredShortContainerEl.innerHTML = '<p class="text-red-400">Error loading featured video.</p>';
+                if (shortsStatusEl) shortsStatusEl.remove();
+                shortsContainerEl.innerHTML = `<p class="col-span-full text-red-400">Error loading shorts.</p>`;
+                if (playlistsStatusEl) playlistsStatusEl.remove();
+                playlistsContainerEl.innerHTML = `<p class="col-span-full text-red-400">Error loading playlists.</p>`;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchYouTubeData();
+            initializeFirebase(); // Start Firebase auth and leaderboard load
+        });
+    </script>
+</body>
+</html>
