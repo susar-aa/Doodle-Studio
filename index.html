@@ -220,6 +220,17 @@
         </div>
     </section>
 
+    <!-- Community Reviews Section -->
+    <section class="py-16 px-4 bg-gray-900 border-t border-gray-800">
+        <div class="max-w-6xl mx-auto text-center">
+            <h3 class="text-3xl font-bold mb-12 text-yellow-400">What Our Viewers Say</h3>
+            <div id="reviews-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 text-left">
+                <!-- Loading state -->
+                <p id="reviews-status" class="col-span-full text-gray-400">Loading reviews from the community...</p>
+            </div>
+        </div>
+    </section>
+
     <!-- Beat Challenge & Leaderboard Section -->
     <section class="py-16 px-4 bg-gray-900 border-t border-gray-800">
         <div class="max-w-6xl mx-auto">
@@ -340,14 +351,15 @@
     <!-- Firebase Imports for Firestore & Auth -->
     <script type="module">
         // Import and expose Firebase modules to the global scope
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        import { getFirestore, collection, onSnapshot, addDoc, serverTimestamp, setLogLevel } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, onSnapshot, addDoc, serverTimestamp, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         
+        // Expose all necessary functions for script.js
         window.firebase = {
             initializeApp,
-            auth: { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged },
-            firestore: { getFirestore, collection, onSnapshot, addDoc, serverTimestamp, setLogLevel }
+            getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged,
+            getFirestore, collection, onSnapshot, addDoc, serverTimestamp, setLogLevel
         };
     </script>
     

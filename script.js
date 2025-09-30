@@ -12,6 +12,7 @@ const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : providedFirebaseConfig;
 const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
+// IMPORTANT: Replace this with your own YouTube Data API v3 key if it's not working
 const API_KEY = "AIzaSyCVR2yEuS5ZaqLV6nPCAXVsK5yU04WNiUk"; 
 const CHANNEL_ID = "UCk4C4vuYLREz3ocUX1d-gfg";
 
@@ -42,6 +43,8 @@ const saveScoreBtn = document.getElementById('save-score-btn');
 const leaderboardBodyEl = document.getElementById('leaderboard-body');
 const commentsContainer = document.getElementById('comments-container');
 const commentYoutubeLink = document.getElementById('comment-youtube-link');
+const reviewsContainerEl = document.getElementById('reviews-container');
+const reviewsStatusEl = document.getElementById('reviews-status');
 
 let score = 0;
 let gameInterval;
@@ -144,6 +147,50 @@ async function fetchPlaylists(API_KEY, CHANNEL_ID) {
     return data.items;
 }
 
+async function fetchChannelReviews(API_KEY, CHANNEL_ID) {
+    // 1. Get the 10 most recent videos to source comments from
+    const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${CHANNEL_ID}&maxResults=10&order=date&type=video&key=${API_KEY}`;
+    const searchResponse = await fetch(searchUrl);
+    if (!searchResponse.ok) throw new Error('Failed to fetch latest videos for reviews');
+    const searchData = await searchResponse.json();
+    const videos = searchData.items || [];
+
+    if (videos.length === 0) return []; // No videos found
+
+    // 2. Create an array of promises to fetch comments for each video
+    const commentPromises = videos.map(video => {
+        const videoId = video.id.videoId;
+        const commentsUrl = `https://www.googleapis.com/youtube/v3/commentThreads?part=snippet&videoId=${videoId}&key=${API_KEY}&order=relevance&maxResults=3`;
+        return fetch(commentsUrl).then(res => res.ok ? res.json() : null).catch(() => null);
+    });
+
+    // 3. Wait for all comment fetches to complete
+    const results = await Promise.all(commentPromises);
+
+    // 4. Consolidate all valid comments into a single array
+    let allComments = [];
+    results.forEach(result => {
+        if (result && result.items) {
+            allComments = allComments.concat(result.items);
+        }
+    });
+
+    // 5. Filter for more substantial comments
+    const filteredComments = allComments.filter(item => 
+        item.snippet?.topLevelComment?.snippet?.textDisplay.length > 25
+    );
+
+    // 6. Shuffle the comments for variety
+    for (let i = filteredComments.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [filteredComments[i], filteredComments[j]] = [filteredComments[j], filteredComments[i]];
+    }
+    
+    // 7. Return up to 6 comments to display
+    return filteredComments.slice(0, 6);
+}
+
+
 function renderFeaturedShort(video) {
     if (featuredShortLoadingEl) featuredShortLoadingEl.remove();
     if (!video) {
@@ -238,6 +285,42 @@ function renderPlaylists(playlists) {
     if(playlistsContainerEl) playlistsContainerEl.innerHTML = htmlContent;
 }
 
+function renderReviews(comments) {
+    if (reviewsStatusEl) reviewsStatusEl.remove();
+    if (!comments || comments.length === 0) {
+        if (reviewsContainerEl) reviewsContainerEl.innerHTML = '<p class="col-span-full text-gray-400">No public comments found yet. Be the first!</p>';
+        return;
+    }
+
+    let htmlContent = '';
+    comments.forEach(item => {
+        const comment = item.snippet.topLevelComment.snippet;
+        const authorName = comment.authorDisplayName;
+        const authorImg = comment.authorProfileImageUrl;
+        const commentText = comment.textDisplay;
+        const videoId = comment.videoId;
+        const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
+
+        const truncatedText = commentText.length > 150 ? commentText.substring(0, 150) + '...' : commentText;
+
+        htmlContent += `
+            <div class="p-6 bg-gray-800 rounded-xl shadow-lg hover:shadow-yellow-500/30 transition duration-300 flex flex-col justify-between">
+                <div class="flex items-start space-x-4 mb-4">
+                    <img src="${authorImg}" alt="${authorName}" class="w-12 h-12 rounded-full object-cover border-2 border-gray-600">
+                    <div>
+                        <p class="font-bold text-md text-yellow-400">${authorName}</p>
+                        <a href="${videoUrl}" target="_blank" rel="noopener noreferrer" class="text-xs text-gray-500 hover:text-cyan-400 transition">on a video</a>
+                    </div>
+                </div>
+                <blockquote class="text-gray-300 text-sm italic border-l-4 border-gray-700 pl-4">
+                    ${truncatedText}
+                </blockquote>
+            </div>
+        `;
+    });
+    if (reviewsContainerEl) reviewsContainerEl.innerHTML = htmlContent;
+}
+
 // --- Game Logic ---
 function startGame() {
     score = 0;
@@ -283,18 +366,18 @@ async function initializeFirebase() {
         return;
     }
     
-    const fire = window.firebase;
+    const { initializeApp, getFirestore, getAuth, setLogLevel, signInWithCustomToken, signInAnonymously, onAuthStateChanged } = window.firebase;
 
     try {
-        const firebaseApp = fire.initializeApp(firebaseConfig);
-        db = fire.firestore.getFirestore(firebaseApp);
-        auth = fire.auth.getAuth(firebaseApp);
-        fire.firestore.setLogLevel('error');
+        const firebaseApp = initializeApp(firebaseConfig);
+        db = getFirestore(firebaseApp);
+        auth = getAuth(firebaseApp);
+        setLogLevel('error');
 
         if (initialAuthToken) {
-            await fire.auth.signInWithCustomToken(auth, initialAuthToken);
+            await signInWithCustomToken(auth, initialAuthToken);
         } else {
-            await fire.auth.signInAnonymously(auth);
+            await signInAnonymously(auth);
         }
     } catch (e) {
         console.error("Firebase Initialization or Auth failed:", e);
@@ -304,7 +387,7 @@ async function initializeFirebase() {
         return;
     }
 
-    fire.auth.onAuthStateChanged(auth, (user) => {
+    onAuthStateChanged(auth, (user) => {
         currentUserId = user ? user.uid : (localStorage.getItem('anon_id') || crypto.randomUUID());
         if (!user) localStorage.setItem('anon_id', currentUserId);
         
@@ -327,19 +410,20 @@ async function saveScore() {
         if(document.getElementById('game-message')) document.getElementById('game-message').textContent = "Cannot save. Auth failed.";
         return;
     }
-
+    
+    const { collection, addDoc, serverTimestamp } = window.firebase;
     const path = `artifacts/${appId}/public/data/scores`;
-    const scoresRef = firebase.firestore.collection(db, path);
+    const scoresRef = collection(db, path);
     
     const playerName = prompt("Enter your name (max 10 chars):") || "Anon Tapper";
     const displayName = playerName.substring(0, 10);
     
     try {
-        await firebase.firestore.addDoc(scoresRef, {
+        await addDoc(scoresRef, {
             userId: currentUserId,
             name: displayName,
             score: scoreToSave,
-            timestamp: firebase.firestore.serverTimestamp()
+            timestamp: serverTimestamp()
         });
         if(document.getElementById('game-message')) document.getElementById('game-message').textContent = `Score saved by ${displayName}! Play again?`;
         if(saveScoreBtn) saveScoreBtn.classList.add('hidden');
@@ -352,12 +436,13 @@ async function saveScore() {
 function loadLeaderboard() {
     if (!db) return;
     
+    const { collection, onSnapshot } = window.firebase;
     const path = `artifacts/${appId}/public/data/scores`;
-    const scoresRef = firebase.firestore.collection(db, path);
+    const scoresRef = collection(db, path);
     if(leaderboardBodyEl) leaderboardBodyEl.innerHTML = '<tr><td colspan="3" class="text-center py-2 text-gray-500">Loading leaderboard...</td></tr>';
 
     try {
-        firebase.firestore.onSnapshot(scoresRef, (snapshot) => {
+        onSnapshot(scoresRef, (snapshot) => {
             const scores = [];
             snapshot.forEach((doc) => {
                 const data = doc.data();
@@ -439,7 +524,7 @@ function renderYouTubeComments(comments) {
 // --- Main Execution ---
 async function fetchYouTubeData() {
     if (API_KEY === "YOUR_YOUTUBE_API_KEY" || CHANNEL_ID === "YOUR_YOUTUBE_CHANNEL_ID") {
-        console.error("API key or Channel ID is missing or incorrect.");
+        console.error("API key or Channel ID is missing or incorrect. Please update script.js.");
         if(totalViewsEl) totalViewsEl.innerHTML = 'N/A';
         if(subscriberCountEl) subscriberCountEl.innerHTML = 'N/A';
         if(videoCountEl) videoCountEl.innerHTML = 'N/A';
@@ -447,14 +532,17 @@ async function fetchYouTubeData() {
         if(featuredShortContainerEl) featuredShortContainerEl.innerHTML = '<p class="text-red-400">API Setup Required.</p>';
         if (shortsStatusEl) shortsStatusEl.textContent = "API configuration error.";
         if (playlistsStatusEl) playlistsStatusEl.textContent = "API configuration error.";
+        if (reviewsStatusEl) reviewsStatusEl.remove();
+        if(reviewsContainerEl) reviewsContainerEl.innerHTML = `<p class="col-span-full text-red-400">API configuration error.</p>`;
         return;
     }
     
     try {
-        const [channelData, videos, playlists] = await Promise.all([
+        const [channelData, videos, playlists, reviews] = await Promise.all([
             fetchChannelData(API_KEY, CHANNEL_ID),
             fetchLatestShorts(API_KEY, CHANNEL_ID),
-            fetchPlaylists(API_KEY, CHANNEL_ID)
+            fetchPlaylists(API_KEY, CHANNEL_ID),
+            fetchChannelReviews(API_KEY, CHANNEL_ID)
         ]);
 
         const stats = channelData.statistics;
@@ -476,6 +564,7 @@ async function fetchYouTubeData() {
         renderFeaturedShort(videos[0]);
         renderShorts(videos);
         renderPlaylists(playlists);
+        renderReviews(reviews);
 
     } catch (error) {
         console.error("Error fetching YouTube data:", error);
@@ -491,6 +580,8 @@ async function fetchYouTubeData() {
         if(shortsContainerEl) shortsContainerEl.innerHTML = `<p class="col-span-full text-red-400">Error loading shorts.</p>`;
         if (playlistsStatusEl) playlistsStatusEl.remove();
         if(playlistsContainerEl) playlistsContainerEl.innerHTML = `<p class="col-span-full text-red-400">Error loading playlists.</p>`;
+        if (reviewsStatusEl) reviewsStatusEl.remove();
+        if(reviewsContainerEl) reviewsContainerEl.innerHTML = `<p class="col-span-full text-red-400">Error loading reviews.</p>`;
     }
 }
 
