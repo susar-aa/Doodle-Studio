@@ -1,0 +1,95 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+
+/* Default Dark Mode Variables */
+:root {
+    --dynamic-accent: #fde68a; /* Default to yellow-400 */
+    --dynamic-shadow-color: 253, 230, 138; /* Default yellow RGB for shadows */
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+/* --- Dark Mode Base (Default) --- */
+body[data-theme='dark'] {
+    background-color: #0d1117;
+    color: #ffffff;
+}
+body[data-theme='dark'] .hero-bg {
+    background: linear-gradient(135deg, #1f2937 0%, #0d1117 100%);
+}
+body[data-theme='dark'] .fb-post-card {
+    background-color: #1f2937; /* gray-800 */
+    border-color: #374151; /* gray-700 */
+}
+
+/* --- Light Mode Base --- */
+body[data-theme='light'] {
+    background-color: #f3f4f6; /* gray-100 */
+    color: #1f2937; /* gray-800 */
+}
+body[data-theme='light'] .hero-bg {
+    background: linear-gradient(135deg, #e5e7eb 0%, #f3f4f6 100%);
+}
+body[data-theme='light'] .bg-gray-800\/50,
+body[data-theme='light'] .bg-gray-800,
+body[data-theme='light'] .bg-gray-900 {
+    background-color: #ffffff; 
+    border-color: #d1d5db;
+}
+body[data-theme='light'] .text-gray-400 {
+    color: #6b7280;
+}
+body[data-theme='light'] .text-gray-300 {
+    color: #4b5563; /* gray-600 */
+}
+body[data-theme='light'] .bg-gray-700\/50 {
+    background-color: #f9fafb; 
+}
+body[data-theme='light'] .fb-post-card {
+    background-color: #ffffff;
+    border-color: #e5e7eb; /* gray-200 */
+}
+
+
+/* --- Dynamic and CTA Styles --- */
+.cta-button {
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(var(--dynamic-shadow-color), 0.4);
+}
+.cta-button:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 6px 20px rgba(var(--dynamic-shadow-color), 0.6);
+}
+.dynamic-border {
+    border-color: var(--dynamic-accent);
+}
+.dynamic-text-color {
+    color: var(--dynamic-accent);
+}
+
+/* Custom spinner for loading state */
+.spinner {
+    border: 4px solid rgba(255, 255, 255, 0.1);
+    border-left-color: var(--dynamic-accent);
+    border-radius: 50%;
+    width: 1rem;
+    height: 1rem;
+    animation: spin 1s linear infinite;
+    display: inline-block;
+}
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Light mode spinner */
+body[data-theme='light'] .spinner {
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    border-left-color: var(--dynamic-accent);
+}
+
+/* Utility class for 9:16 aspect ratio */
+.pb-9\/16 {
+    padding-bottom: 177.77%; 
+}
