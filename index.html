@@ -4,367 +4,1125 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DoodleStd - Bouncing Beat Ball Shorts</title>
-    <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Link to External CSS -->
-    <link rel="stylesheet" href="style.css">
-    <!-- TikTok Embed Script -->
     <script async src="https://www.tiktok.com/embed.js"></script>
-</head>
-<body class="min-h-screen flex flex-col">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
 
-    <!-- Facebook SDK for Page Plugin -->
+        * {
+            cursor: none !important;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0a0e1a;
+            color: #ffffff;
+            overflow-x: hidden;
+        }
+
+        /* Advanced Custom Cursor */
+        .cursor-dot {
+            width: 8px;
+            height: 8px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            position: fixed;
+            pointer-events: none;
+            z-index: 10000;
+            transition: transform 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.8);
+        }
+
+        .cursor-outline {
+            width: 40px;
+            height: 40px;
+            border: 2px solid rgba(102, 126, 234, 0.5);
+            border-radius: 50%;
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            animation: cursor-pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes cursor-pulse {
+            0%, 100% { transform: scale(1) translate(-50%, -50%); opacity: 0.8; }
+            50% { transform: scale(1.2) translate(-50%, -50%); opacity: 0.5; }
+        }
+
+        .cursor-outline.active {
+            width: 60px;
+            height: 60px;
+            background: radial-gradient(circle, rgba(102, 126, 234, 0.1) 0%, transparent 70%);
+        }
+
+        .cursor-wave {
+            position: fixed;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 2px solid rgba(102, 126, 234, 0.6);
+            pointer-events: none;
+            z-index: 9998;
+            animation: wave-expand 0.6s ease-out forwards;
+        }
+
+        @keyframes wave-expand {
+            0% { transform: scale(0); opacity: 1; }
+            100% { transform: scale(2); opacity: 0; }
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 20% 50%, rgba(102, 126, 234, 0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 80%, rgba(118, 75, 162, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .mesh-gradient {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(at 27% 37%, hsla(215, 98%, 61%, 0.15) 0px, transparent 50%),
+                radial-gradient(at 97% 21%, hsla(125, 98%, 72%, 0.15) 0px, transparent 50%),
+                radial-gradient(at 52% 99%, hsla(354, 98%, 61%, 0.15) 0px, transparent 50%),
+                radial-gradient(at 10% 29%, hsla(256, 96%, 67%, 0.15) 0px, transparent 50%),
+                radial-gradient(at 97% 96%, hsla(38, 60%, 74%, 0.15) 0px, transparent 50%);
+            pointer-events: none;
+            z-index: 1;
+            animation: mesh-move 20s ease infinite;
+        }
+
+        @keyframes mesh-move {
+            0%, 100% { transform: translate(0, 0); }
+            33% { transform: translate(30px, -50px); }
+            66% { transform: translate(-20px, 20px); }
+        }
+
+        .pro-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .pro-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
+            transition: left 0.5s;
+        }
+
+        .pro-card:hover::before {
+            left: 100%;
+        }
+
+        .pro-card:hover {
+            transform: translateY(-8px);
+            border-color: rgba(102, 126, 234, 0.5);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5), 0 0 30px rgba(102, 126, 234, 0.3);
+        }
+
+        @keyframes float-smooth {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-15px) rotate(2deg); }
+        }
+
+        .float-element {
+            animation: float-smooth 6s ease-in-out infinite;
+        }
+
+        .gradient-text-pro {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradient-flow 8s ease infinite;
+        }
+
+        @keyframes gradient-flow {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .pro-button {
+            position: relative;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        .pro-button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .pro-button:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .pro-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(102, 126, 234, 0.5);
+        }
+
+        .reveal-element {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .reveal-element.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .hover-scale {
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .hover-scale:hover {
+            transform: scale(1.05) translateZ(0);
+        }
+
+        .spinner-pro {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(102, 126, 234, 0.2);
+            border-top-color: #667eea;
+            border-radius: 50%;
+            animation: spin-smooth 1s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
+        }
+
+        @keyframes spin-smooth {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 10px;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        .game-pulse {
+            animation: game-beat 1.2s ease-in-out infinite;
+        }
+
+        @keyframes game-beat {
+            0%, 100% { 
+                transform: scale(1); 
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+            }
+            50% { 
+                transform: scale(1.05); 
+                box-shadow: 0 0 0 15px rgba(239, 68, 68, 0);
+            }
+        }
+
+        .stagger-1 { animation-delay: 0.1s; }
+        .stagger-2 { animation-delay: 0.2s; }
+        .stagger-3 { animation-delay: 0.3s; }
+    </style>
+</head>
+<body class="min-h-screen">
+    <!-- Custom Cursor -->
+    <div class="cursor-dot"></div>
+    <div class="cursor-outline"></div>
+
+    <!-- Animated Background -->
+    <div class="mesh-gradient"></div>
+
+    <!-- Facebook SDK -->
     <div id="fb-root"></div>
     <script async defer crossorigin="anonymous" src="https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v20.0&appId=YOUR_FACEBOOK_APP_ID&autoLogAppEvents=1" nonce="aBcDeFg"></script>
 
-    <!-- Modern Channel Widget -->
-    <section class="bg-gray-800/50 p-4 border-b border-t border-gray-700">
-        <div class="max-w-6xl mx-auto flex items-center justify-between">
-            <div class="flex items-center space-x-4">
-                <!-- Logo Image - Dynamically loaded via API -->
-                <img 
-                    id="channel-logo" 
-                    class="w-12 h-12 rounded-full object-cover shrink-0 bg-gray-600 border-2 dynamic-border" 
-                    alt="Doodle Studio Logo" 
-                    src="https://placehold.co/48x48/1f2937/ffffff?text=S"
-                    onerror="this.src='https://placehold.co/48x48/1f2937/ffffff?text=S'">
-                
-                <div>
-                    <p class="text-xl font-bold">Doodle Studio</p>
-                    <p id="widget-subscriber-count" class="text-sm text-gray-400">Loading subscribers...</p>
+    <div style="position: relative; z-index: 10;">
+        <!-- Header -->
+        <header class="sticky top-0 z-50 backdrop-blur-xl bg-white/5 border-b border-white/10 shadow-2xl">
+            <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <img id="channel-logo" class="w-14 h-14 rounded-full object-cover border-2 border-purple-500 shadow-lg float-element" alt="Logo" src="https://placehold.co/56x56/667eea/ffffff?text=DS">
+                    <div>
+                        <h1 class="text-2xl font-bold gradient-text-pro">Doodle Studio</h1>
+                        <p id="widget-subscriber-count" class="text-sm text-gray-400 font-medium">Loading subscribers...</p>
+                    </div>
                 </div>
-            </div>
-            
-            <div class="flex items-center space-x-4">
-                <!-- Theme Toggle Button -->
-                <button id="theme-toggle" class="p-2 rounded-full bg-gray-700 hover:bg-gray-600 transition duration-200">
-                    <svg id="sun-icon" class="w-6 h-6 text-yellow-400 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16.95 7.05a8 8 0 10-1.414 1.414"></path>
-                    </svg>
-                    <svg id="moon-icon" class="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
-                    </svg>
-                </button>
-
-                <!-- Prominent Subscribe Button -->
-                <a 
-                    href="https://www.youtube.com/@DoodleStd?sub_confirmation=1" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    class="px-5 py-2 text-sm font-semibold rounded-full bg-red-600 text-white hover:bg-red-500 transition duration-300 shadow-md"
-                >
-                    SUBSCRIBE
+                <a href="https://www.youtube.com/@DoodleStd?sub_confirmation=1" target="_blank" 
+                   class="px-8 py-3 text-sm font-bold rounded-full pro-button text-white shadow-xl hover-scale">
+                    SUBSCRIBE NOW
                 </a>
             </div>
-        </div>
-    </section>
+        </header>
 
-    <!-- Main Hero Section -->
-    <main class="flex-grow flex flex-col justify-center items-center py-16 px-4 hero-bg">
-        <div class="max-w-4xl text-center">
-            
-            <!-- Headline -->
-            <h2 class="text-5xl md:text-7xl font-black mb-4 leading-tight">
-                The Most <span class="dynamic-text-color">Satisfying Beats</span> Come From Bouncing Balls.
-            </h2>
-            
-            <!-- Subtitle/Hook -->
-            <p class="text-xl md:text-2xl text-gray-300 mb-10 max-w-2xl mx-auto">
-                Discover the hypnotic, rhythmic, and visually clean world of Bouncing Beat Ball Shorts—perfect for your quick-scroll escape.
-            </p>
-
-            <!-- Primary Call to Action (CTA) -->
-            <a 
-                href="https://www.youtube.com/@DoodleStd?sub_confirmation=1" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                class="cta-button inline-block px-12 py-4 text-2xl font-bold rounded-full uppercase tracking-wider 
-                       bg-yellow-400 text-gray-900 hover:bg-yellow-300 transition duration-300 transform"
-                style="background-color: var(--dynamic-accent);"
-            >
-                SUBSCRIBE NOW
-            </a>
-            <p class="mt-4 text-sm text-gray-400">Join the rhythm. Never miss a Short!</p>
-        </div>
-    </main>
-
-    <!-- Featured Short Embed & Comments Section -->
-    <section class="py-16 px-4 bg-gray-900 border-t border-gray-800">
-        <div class="max-w-6xl mx-auto text-center">
-            <h3 class="text-3xl font-bold mb-12 dynamic-text-color">Featured Short: Our Latest Beat</h3>
-            
-            <div id="featured-short-container" class="flex justify-center">
-                 <!-- Placeholder for Featured Short -->
-                <div id="featured-short-loading" class="w-80 h-[32rem] flex items-center justify-center bg-gray-800 rounded-xl shadow-2xl">
-                    <span class="spinner text-white"></span>
-                    <p class="ml-3 text-gray-400">Loading best beat...</p>
-                </div>
+        <!-- Hero Section -->
+        <section class="min-h-screen flex items-center justify-center px-6 py-20 reveal-element">
+            <div class="max-w-5xl text-center">
+                <h2 class="text-7xl md:text-8xl font-black mb-8 leading-tight">
+                    Experience <span class="gradient-text-pro">Rhythmic Perfection</span>
+                </h2>
+                <p class="text-xl md:text-2xl text-gray-300 mb-12 max-w-3xl mx-auto leading-relaxed">
+                    Immerse yourself in meticulously crafted bouncing beat ball animations. 
+                    Precision meets artistry in every frame.
+                </p>
+                <a href="https://www.youtube.com/@DoodleStd?sub_confirmation=1" target="_blank" 
+                   class="inline-block px-14 py-5 text-xl font-bold rounded-full pro-button text-white shadow-2xl hover-scale uppercase tracking-wider">
+                    Start Watching
+                </a>
             </div>
+        </section>
 
-            <!-- YouTube API-Powered Comments Section -->
-            <div class="max-w-2xl mx-auto mt-12 text-left">
-                <h4 class="text-2xl font-bold mb-6 text-center text-cyan-400">Top Comments from YouTube</h4>
-
-                <!-- Container for comments -->
-                <div id="comments-container" class="space-y-4">
-                    <p class="text-center text-gray-500">Loading comments...</p>
-                </div>
-                <div class="text-center mt-6">
-                    <a id="comment-youtube-link" href="#" target="_blank" rel="noopener noreferrer" class="px-5 py-2 bg-red-600 hover:bg-red-500 rounded-lg font-semibold transition duration-300 text-white">
-                        Comment on YouTube
-                    </a>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Live Stats Section -->
-    <section class="py-16 px-4 bg-gray-900 border-t border-gray-800">
-        <div class="max-w-6xl mx-auto">
-            
-            <!-- YOUTUBE LIVE STATS -->
-            <div class="text-center mb-16">
-                <h3 class="text-2xl font-semibold text-gray-300 mb-6">LIVE YOUTUBE STATS</h3>
-                <div class="grid grid-cols-3 gap-4 max-w-xl mx-auto">
-                    <div class="p-4 bg-gray-700/50 rounded-xl">
-                        <p id="total-views" class="text-3xl font-extrabold text-cyan-400">
-                            <span class="spinner"></span>
-                        </p>
-                        <p class="text-sm text-gray-400 mt-1">Total Views</p>
+        <!-- Featured Video Section -->
+        <section class="py-24 px-6 reveal-element">
+            <div class="max-w-7xl mx-auto">
+                <h3 class="text-5xl font-bold text-center mb-16 gradient-text-pro">Featured Content</h3>
+                <div class="grid lg:grid-cols-2 gap-12 items-center">
+                    <div id="featured-short-container" class="flex justify-center">
+                        <div class="w-full max-w-md">
+                            <div class="spinner-pro mx-auto"></div>
+                            <p class="text-center mt-4 text-gray-400">Loading featured video...</p>
+                        </div>
                     </div>
-                    <div class="p-4 bg-gray-700/50 rounded-xl">
-                        <p id="subscriber-count" class="text-3xl font-extrabold dynamic-text-color">
-                            <span class="spinner"></span>
-                        </p>
-                        <p class="text-sm text-gray-400 mt-1">Subscribers</p>
-                    </div>
-                    <div class="p-4 bg-gray-700/50 rounded-xl">
-                        <p id="video-count" class="text-3xl font-extrabold text-purple-400">
-                            <span class="spinner"></span>
-                        </p>
-                        <p class="text-sm text-gray-400 mt-1">Total Videos</p>
+                    <div>
+                        <h4 class="text-3xl font-bold mb-6 text-purple-400">Community Reactions</h4>
+                        <div id="comments-container" class="space-y-4 max-h-96 overflow-y-auto pr-2">
+                            <p class="text-gray-500">Loading comments...</p>
+                        </div>
+                        <div class="mt-6">
+                            <a id="comment-youtube-link" href="#" target="_blank" 
+                               class="inline-block px-6 py-3 pro-button text-white rounded-lg font-semibold hover-scale">
+                                Join the Discussion
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
-            
-            <!-- Social Media Section Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-start">
-                
-                <!-- FACEBOOK PAGE PLUGIN -->
-                <div class="flex flex-col items-center">
-                    <h3 class="text-2xl font-semibold text-gray-300 mb-6">CONNECT ON FACEBOOK</h3>
-                    <div class="w-full max-w-sm bg-gray-800/50 p-1 rounded-xl overflow-hidden">
+        </section>
+
+        <!-- Live Statistics -->
+        <section class="py-24 px-6 reveal-element">
+            <div class="max-w-7xl mx-auto">
+                <h3 class="text-4xl font-bold text-center mb-12 gradient-text-pro">Channel Analytics</h3>
+                <div class="grid md:grid-cols-3 gap-8">
+                    <div class="pro-card rounded-2xl p-8 text-center stagger-1 reveal-element">
+                        <div class="text-5xl font-black text-cyan-400 mb-3" id="total-views">-</div>
+                        <div class="text-sm text-gray-400 uppercase tracking-wider">Total Views</div>
+                    </div>
+                    <div class="pro-card rounded-2xl p-8 text-center stagger-2 reveal-element">
+                        <div class="text-5xl font-black gradient-text-pro mb-3" id="subscriber-count">-</div>
+                        <div class="text-sm text-gray-400 uppercase tracking-wider">Subscribers</div>
+                    </div>
+                    <div class="pro-card rounded-2xl p-8 text-center stagger-3 reveal-element">
+                        <div class="text-5xl font-black text-purple-400 mb-3" id="video-count">-</div>
+                        <div class="text-sm text-gray-400 uppercase tracking-wider">Videos Published</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Social Media Section -->
+        <section class="py-24 px-6 reveal-element">
+            <div class="max-w-7xl mx-auto">
+                <h3 class="text-4xl font-bold text-center mb-16 gradient-text-pro">Connect With Us</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <!-- Facebook -->
+                    <div class="pro-card rounded-2xl p-6 text-center">
+                        <h4 class="text-2xl font-bold mb-4 text-blue-400">Facebook</h4>
                         <div class="fb-page" 
                              data-href="https://www.facebook.com/854412891078053" 
                              data-tabs="timeline" 
-                             data-width="500" 
-                             data-height="" 
+                             data-width="400" 
+                             data-height="300" 
                              data-small-header="false" 
                              data-adapt-container-width="true" 
                              data-hide-cover="false" 
                              data-show-facepile="true">
-                            <blockquote cite="https://www.facebook.com/854412891078053" class="fb-xfbml-parse-ignore">
-                                <a href="https://www.facebook.com/854412891078053">Doodle Studio</a>
-                            </blockquote>
+                        </div>
+                    </div>
+
+                    <!-- Instagram -->
+                    <div class="pro-card rounded-2xl p-6 text-center">
+                        <h4 class="text-2xl font-bold mb-4 text-pink-400">Instagram</h4>
+                        <a href="https://www.instagram.com/doodle_contents/" target="_blank" 
+                           class="block mt-4 px-8 py-3 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-semibold rounded-lg hover-scale">
+                            Follow @doodle_contents
+                        </a>
+                    </div>
+
+                    <!-- TikTok -->
+                    <div class="pro-card rounded-2xl p-6 text-center">
+                        <h4 class="text-2xl font-bold mb-4 text-white">TikTok</h4>
+                        <blockquote class="tiktok-embed" cite="https://www.tiktok.com/@doodle_.studio" 
+                                     data-unique-id="doodle_.studio" data-embed-type="creator" 
+                                     style="max-width: 780px; min-width: 288px;">
+                            <section>
+                                <a target="_blank" href="https://www.tiktok.com/@doodle_.studio">@doodle_.studio</a>
+                            </section>
+                        </blockquote>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Value Proposition -->
+        <section class="py-24 px-6 reveal-element">
+            <div class="max-w-7xl mx-auto">
+                <h3 class="text-4xl font-bold text-center mb-16 gradient-text-pro">Why Choose DoodleStd?</h3>
+                <div class="grid md:grid-cols-3 gap-8">
+                    <div class="pro-card rounded-2xl p-8 text-center hover-scale">
+                        <div class="text-5xl mb-4">🎵</div>
+                        <h4 class="text-xl font-bold mb-3 text-cyan-400">Hypnotic Audio</h4>
+                        <p class="text-gray-400">Perfectly synchronized sound design for every bounce and collision.</p>
+                    </div>
+                    <div class="pro-card rounded-2xl p-8 text-center hover-scale">
+                        <div class="text-5xl mb-4">⚡</div>
+                        <h4 class="text-xl font-bold mb-3 text-purple-400">Instant Satisfaction</h4>
+                        <p class="text-gray-400">Engaging visual treats delivered in under 60 seconds.</p>
+                    </div>
+                    <div class="pro-card rounded-2xl p-8 text-center hover-scale">
+                        <div class="text-5xl mb-4">✨</div>
+                        <h4 class="text-xl font-bold mb-3 text-yellow-400">Crisp Visuals</h4>
+                        <p class="text-gray-400">Geometric graphics with vibrant colors, easy on the eyes.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Community Reviews -->
+        <section class="py-24 px-6 reveal-element">
+            <div class="max-w-7xl mx-auto">
+                <h3 class="text-4xl font-bold text-center mb-16 gradient-text-pro">Community Voices</h3>
+                <div id="reviews-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <p id="reviews-status" class="col-span-full text-center text-gray-400">Loading reviews...</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Game Section -->
+        <section class="py-24 px-6 reveal-element">
+            <div class="max-w-7xl mx-auto">
+                <h3 class="text-5xl font-bold text-center mb-16 gradient-text-pro">Rhythm Challenge</h3>
+                <div class="grid lg:grid-cols-2 gap-12">
+                    <div class="pro-card rounded-3xl p-10 text-center">
+                        <h4 class="text-3xl font-bold mb-6 text-purple-400">Beat Tapper</h4>
+                        <p class="text-gray-300 mb-8">Test your reflexes. Tap the target as fast as you can in 10 seconds.</p>
+                        <div class="text-6xl font-black mb-6">
+                            <span class="text-gray-400">Score:</span> <span id="game-score" class="gradient-text-pro">0</span>
+                        </div>
+                        <div class="text-2xl font-semibold mb-8 text-cyan-400">
+                            Time: <span id="game-timer">--s</span>
+                        </div>
+                        <button id="game-button" class="w-40 h-40 rounded-full bg-gradient-to-br from-red-500 to-pink-600 flex items-center justify-center text-white text-2xl font-black mx-auto shadow-2xl game-pulse mb-8" disabled>
+                            <span id="game-message">READY</span>
+                        </button>
+                        <div class="flex justify-center space-x-4">
+                            <button id="start-game-btn" class="px-8 py-4 pro-button text-white rounded-xl font-bold hover-scale">
+                                START CHALLENGE
+                            </button>
+                            <button id="save-score-btn" class="px-8 py-4 bg-gradient-to-r from-yellow-500 to-orange-500 text-white rounded-xl font-bold hover-scale hidden">
+                                SAVE SCORE
+                            </button>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-6">Player ID: <span id="current-user-id">Connecting...</span></p>
+                    </div>
+                    <div class="pro-card rounded-3xl p-10">
+                        <h4 class="text-3xl font-bold mb-8 text-yellow-400 text-center">Leaderboard</h4>
+                        <div class="overflow-hidden rounded-xl">
+                            <table class="w-full">
+                                <thead>
+                                    <tr class="bg-white/5">
+                                        <th class="p-4 text-left text-sm uppercase tracking-wider">Rank</th>
+                                        <th class="p-4 text-left text-sm uppercase tracking-wider">Player</th>
+                                        <th class="p-4 text-right text-sm uppercase tracking-wider">Score</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="leaderboard-body" class="divide-y divide-white/10">
+                                    <tr><td colspan="3" class="p-6 text-center text-gray-500">Loading rankings...</td></tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
+            </div>
+        </section>
 
-                <!-- INSTAGRAM PROFILE SECTION -->
-                <div class="flex flex-col items-center">
-                    <h3 class="text-2xl font-semibold text-gray-300 mb-6">LATEST ON INSTAGRAM</h3>
-                    <div class="w-full max-w-sm">
-                        <blockquote class="instagram-media" data-instgrm-permalink="https://www.instagram.com/doodle_.studio" data-instgrm-version="12" style=" background:#FFF; border:0; border-radius:3px; box-shadow:0 0 1px 0 rgba(0,0,0,0.5),0 1px 10px 0 rgba(0,0,0,0.15); margin: 1px; max-width:540px; min-width:326px; padding:0; width:99.375%; width:undefinedpx;height:undefinedpx;max-height:100%; width:undefinedpx;"><div style="padding:16px;"> <a id="main_link" href="doodle_.studio" style=" background:#FFFFFF; line-height:0; padding:0 0; text-align:center; text-decoration:none; width:100%;" target="_blank"> <div style=" display: flex; flex-direction: row; align-items: center;"> <div style="background-color: #F4F4F4; border-radius: 50%; flex-grow: 0; height: 40px; margin-right: 14px; width: 40px;"></div> <div style="display: flex; flex-direction: column; flex-grow: 1; justify-content: center;"> <div style=" background-color: #F4F4F4; border-radius: 4px; flex-grow: 0; height: 14px; margin-bottom: 6px; width: 100px;"></div> <div style=" background-color: #F4F4F4; border-radius: 4px; flex-grow: 0; height: 14px; width: 60px;"></div></div></div><div style="padding: 19% 0;"></div> <div style="display:block; height:50px; margin:0 auto 12px; width:50px;"><svg width="50px" height="50px" viewBox="0 0 60 60" version="1.1" xmlns="https://www.w3.org/2000/svg" xmlns:xlink="https://www.w3.org/1999/xlink"><g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd"><g transform="translate(-511.000000, -20.000000)" fill="#000000"><g><path d="M556.869,30.41 C554.814,30.41 553.148,32.076 553.148,34.131 C553.148,36.186 554.814,37.852 556.869,37.852 C558.924,37.852 560.59,36.186 560.59,34.131 C560.59,32.076 558.924,30.41 556.869,30.41 M541,60.657 C535.114,60.657 530.342,55.887 530.342,50 C530.342,44.114 535.114,39.342 541,39.342 C546.887,39.342 551.658,44.114 551.658,50 C551.658,55.887 546.887,60.657 541,60.657 M541,33.886 C532.1,33.886 524.886,41.1 524.886,50 C524.886,58.899 532.1,66.113 541,66.113 C549.9,66.113 557.115,58.899 557.115,50 C557.115,41.1 549.9,33.886 541,33.886 M565.378,62.101 C565.244,65.022 564.756,66.606 564.346,67.663 C563.803,69.06 563.154,70.057 562.106,71.106 C561.058,72.155 560.06,72.803 558.662,73.347 C557.607,73.757 556.021,74.244 553.102,74.378 C549.944,74.521 548.997,74.552 541,74.552 C533.003,74.552 532.056,74.521 528.898,74.378 C525.979,74.244 524.393,73.757 523.338,73.347 C521.94,72.803 520.942,72.155 519.894,71.106 C518.846,70.057 518.197,69.06 517.654,67.663 C517.244,66.606 516.755,65.022 516.623,62.101 C516.479,58.943 516.448,57.996 516.448,50 C516.448,42.003 516.479,41.056 516.623,37.899 C516.755,34.978 517.244,33.391 517.654,32.338 C518.197,30.938 518.846,29.942 519.894,28.894 C520.942,27.846 521.94,27.196 523.338,26.654 C524.393,26.244 525.979,25.756 528.898,25.623 C532.057,25.479 533.004,25.448 541,25.448 C548.997,25.448 549.943,25.479 553.102,25.623 C556.021,25.756 557.607,26.244 558.662,26.654 C560.06,27.196 561.058,27.846 562.106,28.894 C563.154,29.942 563.803,30.938 564.346,32.338 C564.756,33.391 565.244,34.978 565.378,37.899 C565.522,41.056 565.552,42.003 565.552,50 C565.552,57.996 565.522,58.943 565.378,62.101 M570.82,37.631 C570.674,34.438 570.167,32.258 569.425,30.349 C568.659,28.377 567.633,26.702 565.965,25.035 C564.297,23.368 562.623,22.342 560.652,21.575 C558.743,20.834 556.562,20.326 553.369,20.18 C550.169,20.033 549.148,20 541,20 C532.853,20 531.831,20.033 528.631,20.18 C525.438,20.326 523.257,20.834 521.349,21.575 C519.376,22.342 517.703,23.368 516.035,25.035 C514.368,26.702 513.342,28.377 512.574,30.349 C511.834,32.258 511.326,34.438 511.181,37.631 C511.035,40.831 511,41.851 511,50 C511,58.147 511.035,59.17 511.181,62.369 C511.326,65.562 511.834,67.743 512.574,69.651 C513.342,71.625 514.368,73.296 516.035,74.965 C517.703,76.634 519.376,77.658 521.349,78.425 C523.257,79.167 525.438,79.673 528.631,79.82 C531.831,79.965 532.853,80.001 541,80.001 C549.148,80.001 550.169,79.965 553.369,79.82 C556.562,79.673 558.743,79.167 560.652,78.425 C562.623,77.658 564.297,76.634 565.965,74.965 C567.633,73.296 568.659,71.625 569.425,69.651 C570.167,67.743 570.674,65.562 570.82,62.369 C570.966,59.17 571,58.147 571,50 C571,41.851 570.966,40.831 570.82,37.631"></path></g></g></g></svg></div><div style="padding-top: 8px;"> <div style=" color:#3897f0; font-family:Arial,sans-serif; font-size:14px; font-style:normal; font-weight:550; line-height:18px;"> View this post on Instagram</div></div><div style="padding: 12.5% 0;"></div> <div style="display: flex; flex-direction: row; margin-bottom: 14px; align-items: center;"><div> <div style="background-color: #F4F4F4; border-radius: 50%; height: 12.5px; width: 12.5px; transform: translateX(0px) translateY(7px);"></div> <div style="background-color: #F4F4F4; height: 12.5px; transform: rotate(-45deg) translateX(3px) translateY(1px); width: 12.5px; flex-grow: 0; margin-right: 14px; margin-left: 2px;"></div> <div style="background-color: #F4F4F4; border-radius: 50%; height: 12.5px; width: 12.5px; transform: translateX(9px) translateY(-18px);"></div></div><div style="margin-left: 8px;"> <div style=" background-color: #F4F4F4; border-radius: 50%; flex-grow: 0; height: 20px; width: 20px;"></div> <div style=" width: 0; height: 0; border-top: 2px solid transparent; border-left: 6px solid #f4f4f4; border-bottom: 2px solid transparent; transform: translateX(16px) translateY(-4px) rotate(30deg)"></div></div><div style="margin-left: auto;"> <div style=" width: 0px; border-top: 8px solid #F4F4F4; border-right: 8px solid transparent; transform: translateY(16px);"></div> <div style=" background-color: #F4F4F4; flex-grow: 0; height: 12px; width: 16px; transform: translateY(-4px);"></div> <div style=" width: 0; height: 0; border-top: 8px solid #F4F4F4; border-left: 8px solid transparent; transform: translateY(-4px) translateX(8px);"></div></div></div> <div style="display: flex; flex-direction: column; flex-grow: 1; justify-content: center; margin-bottom: 24px;"> <div style=" background-color: #F4F4F4; border-radius: 4px; flex-grow: 0; height: 14px; margin-bottom: 6px; width: 224px;"></div> <div style=" background-color: #F4F4F4; border-radius: 4px; flex-grow: 0; height: 14px; width: 144px;"></div></div></a><p style=" color:#c9c8cd; font-family:Arial,sans-serif; font-size:14px; line-height:17px; margin-bottom:0; margin-top:8px; overflow:hidden; padding:8px 0 7px; text-align:center; text-overflow:ellipsis; white-space:nowrap;"><a href="doodle_.studio" style=" color:#c9c8cd; font-family:Arial,sans-serif; font-size:14px; font-style:normal; font-weight:normal; line-height:17px; text-decoration:none;" target="_blank">Shared post</a> on <time style=" font-family:Arial,sans-serif; font-size:14px; line-height:17px;">Time</time></p></div></blockquote><script src="https://www.instagram.com/embed.js"></script><script type="text/javascript" src="https://www.embedista.com/j/instagramfeed1707.js"></script><div style="overflow: auto; position: absolute; height: 0pt; width: 0pt;"><a href="https://www.embedista.com/instagramfeed">Embed Instagram Post</a> Code Generator</div></div><style>.boxes3{height:175px;width:153px;} #n img{max-height:none!important;max-width:none!important;background:none!important} #inst i{max-height:none!important;max-width:none!important;background:none!important}</style></div>
-                         </div>
-                     <a href="https://www.instagram.com/doodle_contents/" target="_blank" rel="noopener noreferrer" class="mt-4 inline-block px-8 py-2 bg-pink-600 text-white font-semibold rounded-lg hover:bg-pink-500 transition-colors duration-300">
-                        Follow on Instagram
+        <!-- Latest Shorts -->
+        <section class="py-24 px-6 reveal-element">
+            <div class="max-w-7xl mx-auto">
+                <h3 class="text-5xl font-bold text-center mb-16 gradient-text-pro">Latest Creations</h3>
+                <div id="latest-shorts-container" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+                    <div class="col-span-full flex justify-center">
+                        <div class="spinner-pro"></div>
+                    </div>
+                </div>
+                <div class="text-center mt-16">
+                    <a href="https://www.youtube.com/@DoodleStd/shorts" target="_blank" 
+                       class="inline-block px-10 py-4 text-xl font-bold rounded-xl pro-button text-white shadow-2xl hover-scale">
+                        View All Shorts
                     </a>
                 </div>
-                
-                <!-- TIKTOK PROFILE SECTION -->
-                <div class="flex flex-col items-center">
-                    <h3 class="text-2xl font-semibold text-gray-300 mb-6">LATEST ON TIKTOK</h3>
-                    <div class="w-full max-w-sm bg-gray-800/50 p-1 rounded-xl overflow-hidden">
-                         <blockquote class="tiktok-embed" cite="https://www.tiktok.com/@doodle_.studio" data-unique-id="doodle_.studio" data-embed-type="creator" style="width: 100%; max-width: 780px; min-width: 288px;" > <section> <a target="_blank" href="https://www.tiktok.com/@doodle_.studio?refer=creator_embed">@doodle_.studio</a> </section> </blockquote>
-                    </div>
+            </div>
+        </section>
+
+        <!-- Playlists Section -->
+        <section class="py-24 px-6 reveal-element">
+            <div class="max-w-7xl mx-auto">
+                <h3 class="text-4xl font-bold text-center mb-16 gradient-text-pro">Curated Playlists</h3>
+                <div id="playlists-container" class="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                    <p id="playlists-status" class="col-span-full text-center text-gray-400">Loading playlists...</p>
+                </div>
+                <div class="text-center mt-12">
+                    <a href="https://www.youtube.com/@DoodleStd/playlists" target="_blank" 
+                       class="inline-block px-10 py-4 text-xl font-bold rounded-xl pro-button text-white shadow-2xl hover-scale">
+                        View All Playlists
+                    </a>
                 </div>
             </div>
+        </section>
 
-        </div>
-    </section>
-
-    <!-- Value Proposition Section -->
-    <section class="py-16 px-4 bg-gray-900 border-t border-gray-800">
-        <div class="max-w-6xl mx-auto">
-            <h3 class="text-3xl font-bold text-center mb-12 text-cyan-400">Why Watch DoodleStd Shorts?</h3>
-            <div class="grid md:grid-cols-3 gap-8 text-center">
-                <!-- Feature 1 -->
-                <div class="p-6 bg-gray-800 rounded-xl shadow-lg hover:shadow-cyan-500/30 transition duration-300">
-                    <div class="text-4xl mb-3 dynamic-text-color">🔊</div>
-                    <p class="text-xl font-semibold mb-2">Hypnotic ASMR Audio</p>
-                    <p class="text-gray-400">Unique sound design perfectly synchronized to every bounce and collision.</p>
+        <!-- Footer -->
+        <footer class="backdrop-blur-xl bg-white/5 border-t border-white/10 py-12 px-6">
+            <div class="max-w-7xl mx-auto text-center">
+                <h2 class="text-3xl font-bold gradient-text-pro mb-6">Doodle Studio</h2>
+                <p class="text-gray-400 mb-8">Precision. Rhythm. Visual Excellence.</p>
+                <div class="flex justify-center space-x-6 mb-8">
+                    <a href="https://www.youtube.com/@DoodleStd" target="_blank" class="text-gray-400 hover:text-purple-400 transition-colors hover-scale">
+                        <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+                    </a>
+                    <a href="https://www.facebook.com/854412891078053" target="_blank" class="text-gray-400 hover:text-blue-400 transition-colors hover-scale">
+                        <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z"/></svg>
+                    </a>
+                    <a href="https://www.instagram.com/doodle_contents/" target="_blank" class="text-gray-400 hover:text-pink-400 transition-colors hover-scale">
+                        <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+                    </a>
+                    <a href="https://www.tiktok.com/@doodle_.studio" target="_blank" class="text-gray-400 hover:text-white transition-colors hover-scale">
+                        <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-2.43.05-4.85-.98-6.42-2.98-1.7-2.14-2.08-4.78-1.1-7.18.91-2.29 2.99-3.82 5.27-4.29.19-.04.38-.06.58-.06.63 0 1.25.1 1.84.31.14.05.28.09.42.15.22.09.43.2.64.31.02-1.83.01-3.66.01-5.49-.01-1.29-.39-2.58-1.15-3.66-1.22-1.73-3.26-2.66-5.32-2.5-1.12.08-2.24.4-3.26.93v-4.2c1.19-.36 2.44-.57 3.68-.62z"/></svg>
+                    </a>
                 </div>
-                <!-- Feature 2 -->
-                <div class="p-6 bg-gray-800 rounded-xl shadow-lg hover:shadow-purple-500/30 transition duration-300">
-                    <div class="text-4xl mb-3 text-purple-400">⏱️</div>
-                    <p class="text-xl font-semibold mb-2">Instant Satisfaction</p>
-                    <p class="text-gray-400">Videos are always Short, delivering an engaging visual treat in under 60 seconds.</p>
-                </div>
-                <!-- Feature 3 -->
-                <div class="p-6 bg-gray-800 rounded-xl shadow-lg hover:shadow-yellow-500/30 transition duration-300">
-                    <div class="text-4xl mb-3 text-cyan-400">✨</div>
-                    <p class="text-xl font-semibold mb-2">Clean, Crisp Visuals</p>
-                    <p class="text-gray-400">Geometric graphics and vibrant colors designed to be easy on the eyes and hard to stop watching.</p>
-                </div>
+                <p class="text-sm text-gray-600">© 2025 Doodle Studio. All rights reserved.</p>
             </div>
-        </div>
-    </section>
+        </footer>
+    </div>
 
-    <!-- Community Reviews Section -->
-    <section class="py-16 px-4 bg-gray-900 border-t border-gray-800">
-        <div class="max-w-6xl mx-auto text-center">
-            <h3 class="text-3xl font-bold mb-12 text-yellow-400">What Our Viewers Say</h3>
-            <div id="reviews-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 text-left">
-                <!-- Loading state -->
-                <p id="reviews-status" class="col-span-full text-gray-400">Loading reviews from the community...</p>
-            </div>
-        </div>
-    </section>
-
-    <!-- Beat Challenge & Leaderboard Section -->
-    <section class="py-16 px-4 bg-gray-900 border-t border-gray-800">
-        <div class="max-w-6xl mx-auto">
-            <h3 class="text-3xl font-bold text-center mb-12 text-purple-400">The Beat Challenge: High Score Leaderboard</h3>
-
-            <div class="grid lg:grid-cols-2 gap-12">
-                <!-- Game Panel -->
-                <div class="p-6 bg-gray-800 rounded-xl shadow-2xl shadow-purple-500/20 text-center">
-                    <h4 class="text-2xl font-bold mb-4 dynamic-text-color">Rhythm Tapper</h4>
-                    <p class="text-gray-400 mb-6">Test your rhythm! Tap the ball as fast as you can in 10 seconds.</p>
-
-                    <div class="text-5xl font-extrabold mb-4">
-                        Score: <span id="game-score" class="dynamic-text-color">0</span>
-                    </div>
-                    <div class="text-lg font-medium mb-4 text-cyan-400">
-                        Time Left: <span id="game-timer">--s</span>
-                    </div>
-
-                    <button id="game-button" class="w-32 h-32 rounded-full bg-red-600 flex items-center justify-center 
-                                                    text-white text-xl font-black mx-auto transform hover:scale-105 transition duration-100"
-                            disabled>
-                        <span id="game-message">Press START!</span>
-                    </button>
-
-                    <div class="flex justify-center space-x-4 mt-6">
-                        <button id="start-game-btn" class="px-6 py-3 bg-green-600 hover:bg-green-500 rounded-lg font-semibold transition duration-300">
-                            START GAME
-                        </button>
-                        <button id="save-score-btn" class="px-6 py-3 bg-yellow-600 hover:bg-yellow-500 rounded-lg font-semibold transition duration-300 hidden">
-                            SAVE SCORE
-                        </button>
-                    </div>
-                    <p class="text-xs text-gray-500 mt-4">Your ID: <span id="current-user-id">Loading...</span></p>
-                </div>
-
-                <!-- Leaderboard Panel -->
-                <div class="p-6 bg-gray-800 rounded-xl shadow-2xl shadow-yellow-500/20">
-                    <h4 class="text-2xl font-bold mb-4 dynamic-text-color">Top Tappers</h4>
-                    <table class="min-w-full text-left rounded-lg overflow-hidden">
-                        <thead>
-                            <tr class="bg-gray-600 text-sm uppercase tracking-wider">
-                                <th class="p-3 w-1/6">Rank</th>
-                                <th class="p-3 w-4/6">Name</th>
-                                <th class="p-3 w-1/6">Score</th>
-                            </tr>
-                        </thead>
-                        <tbody id="leaderboard-body" class="text-sm">
-                            <tr><td colspan="3" class="text-center py-4 text-gray-500">Loading leaderboard...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Latest Shorts Section -->
-    <section class="py-16 px-4 bg-gray-900 border-t border-gray-800">
-        <div class="max-w-6xl mx-auto text-center">
-            <h3 class="text-3xl font-bold mb-12 dynamic-text-color">Latest 5 Beat Ball Shorts</h3>
-            <div id="latest-shorts-container" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-5 gap-6 justify-items-center">
-                <p id="shorts-status" class="col-span-full text-gray-400">Loading latest shorts...</p>
-            </div>
-            <a href="https://www.youtube.com/@DoodleStd/shorts" target="_blank" rel="noopener noreferrer"
-               class="mt-12 inline-block px-8 py-3 text-xl font-semibold rounded-lg bg-purple-600 text-white 
-                      hover:bg-purple-500 transition duration-300 transform hover:scale-105">
-                Explore All Shorts on YouTube →
-            </a>
-        </div>
-    </section>
-
-    <!-- Playlists Section -->
-    <section class="py-16 px-4 bg-gray-900 border-t border-gray-800">
-        <div class="max-w-6xl mx-auto text-center">
-            <h3 class="text-3xl font-bold mb-12 text-cyan-400">Organized Beats: Playlists</h3>
-            <div id="playlists-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6 justify-items-center">
-                <p id="playlists-status" class="col-span-full text-gray-400">Loading playlists...</p>
-            </div>
-            <a href="https://www.youtube.com/@DoodleStd/playlists" target="_blank" rel="noopener noreferrer"
-               class="mt-12 inline-block px-8 py-3 text-xl font-semibold rounded-lg bg-yellow-600 text-white 
-                      hover:bg-yellow-500 transition duration-300 transform hover:scale-105">
-                View All Playlists →
-            </a>
-        </div>
-    </section>
-
-    <!-- Footer -->
-    <footer class="p-8 bg-gray-800 border-t border-gray-700 text-center text-gray-400">
-        <div class="max-w-6xl mx-auto">
-            <p class="mb-4 text-lg font-medium">Bouncing Beats. Pure Satisfaction.</p>
-            <div class="flex justify-center space-x-6">
-                <!-- YouTube Link -->
-                <a href="https://www.youtube.com/@DoodleStd" target="_blank" rel="noopener noreferrer" class="hover:text-red-500 transition duration-300">
-                    <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M12.001 0a12 12 0 00-12 12 12 12 0 0012 12 12 12 0 0012-12 12 12 0 00-12-12zm6.39 16.39s-.236-1.554-1.026-2.344c-.79-.79-2.226-1.026-3.79-1.026h-3.13c-1.564 0-2.99.236-3.79 1.026-.79.79-1.026 2.344-1.026 2.344a1.88 1.88 0 00.126 1.487 1.88 1.88 0 001.487.892h10.43c.594 0 1.137-.248 1.487-.892a1.88 1.88 0 00.126-1.487zm-6.39-1.474c.945 0 1.71-.765 1.71-1.71s-.765-1.71-1.71-1.71-1.71.765-1.71 1.71.765 1.71 1.71 1.71zm0-3.13c1.72 0 3.13.72 3.13 1.42s-1.41 1.42-3.13 1.42-3.13-.72-3.13-1.42 1.41-1.42 3.13-1.42z"/><path d="M12.001 3.52c4.64 0 8.48 3.84 8.48 8.48s-3.84 8.48-8.48 8.48-8.48-3.84-8.48-8.48 3.84-8.48 8.48-8.48z" fill="white" stroke="white" stroke-width="2"/></svg>
-                </a>
-                <!-- Facebook Link -->
-                <a id="footer-facebook-link" href="https://www.facebook.com/854412891078053" target="_blank" rel="noopener noreferrer" class="hover:text-blue-500 transition duration-300">
-                    <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                        <path fill-rule="evenodd" d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" clip-rule="evenodd" />
-                    </svg>
-                </a>
-                <!-- Instagram Link -->
-                <a href="https://www.instagram.com/doodle_contents/" target="_blank" rel="noopener noreferrer" class="hover:text-pink-500 transition duration-300">
-                    <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                         <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.85s-.011 3.584-.069 4.85c-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.85-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.85 0-3.204.012-3.584.07-4.85.148-3.227 1.66-4.771 4.919-4.919 1.266-.057 1.645-.069 4.85-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.162 6.162 6.162 6.162-2.759 6.162-6.162-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4s1.791-4 4-4 4 1.79 4 4-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.441 1.441 1.441 1.441-.645 1.441-1.441-.645-1.44-1.441-1.44z" />
-                    </svg>
-                </a>
-                <!-- TikTok Link -->
-                <a href="https://www.tiktok.com/@doodle_.studio" target="_blank" rel="noopener noreferrer" class="hover:text-white transition duration-300">
-                     <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                        <path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-2.43.05-4.85-.98-6.42-2.98-1.7-2.14-2.08-4.78-1.1-7.18.91-2.29 2.99-3.82 5.27-4.29.19-.04.38-.06.58-.06.63 0 1.25.1 1.84.31.14.05.28.09.42.15.22.09.43.2.64.31.02-1.83.01-3.66.01-5.49-.01-1.29-.39-2.58-1.15-3.66-1.22-1.73-3.26-2.66-5.32-2.5-1.12.08-2.24.4-3.26.93v-4.2c1.19-.36 2.44-.57 3.68-.62.33-.01.66-.02 1-.02 1.31-.02 2.61-.01 3.91-.02z"/>
-                    </svg>
-                </a>
-            </div>
-            <p class="mt-8 text-sm">&copy; <script>document.write(new Date().getFullYear())</script> DoodleStd. All Rights Reserved.</p>
-        </div>
-    </footer>
-
-    <!-- Firebase Imports for Firestore & Auth -->
+    <!-- Firebase Imports -->
     <script type="module">
-        // Import and expose Firebase modules to the global scope
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, onSnapshot, addDoc, serverTimestamp, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         
-        // Expose all necessary functions for script.js
         window.firebase = {
             initializeApp,
             getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged,
             getFirestore, collection, onSnapshot, addDoc, serverTimestamp, setLogLevel
         };
     </script>
-    
-    <!-- Link to External JS -->
-    <script src="script.js" type="module"></script>
+
+    <script type="module">
+        // Custom Cursor System
+        const cursorDot = document.querySelector('.cursor-dot');
+        const cursorOutline = document.querySelector('.cursor-outline');
+        let mouseX = 0, mouseY = 0;
+        let dotX = 0, dotY = 0;
+        let outlineX = 0, outlineY = 0;
+        let lastWaveTime = 0;
+
+        document.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+
+            const currentTime = Date.now();
+            if (currentTime - lastWaveTime > 100) {
+                createCursorWave(mouseX, mouseY);
+                lastWaveTime = currentTime;
+            }
+        });
+
+        function createCursorWave(x, y) {
+            const wave = document.createElement('div');
+            wave.className = 'cursor-wave';
+            wave.style.left = x + 'px';
+            wave.style.top = y + 'px';
+            wave.style.transform = 'translate(-50%, -50%)';
+            document.body.appendChild(wave);
+            setTimeout(() => wave.remove(), 600);
+        }
+
+        function animateCursor() {
+            dotX += (mouseX - dotX) * 0.3;
+            dotY += (mouseY - dotY) * 0.3;
+            outlineX += (mouseX - outlineX) * 0.15;
+            outlineY += (mouseY - outlineY) * 0.15;
+
+            cursorDot.style.left = dotX + 'px';
+            cursorDot.style.top = dotY + 'px';
+            cursorOutline.style.left = outlineX + 'px';
+            cursorOutline.style.top = outlineY + 'px';
+
+            requestAnimationFrame(animateCursor);
+        }
+        animateCursor();
+
+        const interactiveElements = document.querySelectorAll('a, button, .pro-card');
+        interactiveElements.forEach(el => {
+            el.addEventListener('mouseenter', () => {
+                cursorDot.style.transform = 'scale(2)';
+                cursorDot.style.background = 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)';
+                cursorOutline.classList.add('active');
+            });
+            el.addEventListener('mouseleave', () => {
+                cursorDot.style.transform = 'scale(1)';
+                cursorDot.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+                cursorOutline.classList.remove('active');
+            });
+        });
+
+        document.addEventListener('mousedown', () => {
+            cursorDot.style.transform = 'scale(0.5)';
+            cursorOutline.style.transform = 'scale(0.8) translate(-50%, -50%)';
+        });
+        document.addEventListener('mouseup', () => {
+            cursorDot.style.transform = 'scale(1)';
+            cursorOutline.style.transform = 'scale(1) translate(-50%, -50%)';
+        });
+
+        // Scroll Reveal
+        const revealObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+
+        document.querySelectorAll('.reveal-element').forEach(el => {
+            revealObserver.observe(el);
+        });
+
+        // Configuration
+        const providedFirebaseConfig = {
+            apiKey: "AIzaSyDWb0JNy_Ogf8ZB-SXVofol_6sfZvgY4qY",
+            authDomain: "doodle-studio-1bbdc.firebaseapp.com",
+            projectId: "doodle-studio-1bbdc",
+            storageBucket: "doodle-studio-1bbdc.firebasestorage.app",
+            messagingSenderId: "282494504927",
+            appId: "1:282494504927:web:e_0abb99050144472377e6a",
+        };
+
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : providedFirebaseConfig;
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        const API_KEY = "AIzaSyCVR2yEuS5ZaqLV6nPCAXVsK5yU04WNiUk";
+        const CHANNEL_ID = "UCk4C4vuYLREz3ocUX1d-gfg";
+
+        let db = null;
+        let auth = null;
+        let currentUserId = 'anonymous';
+        let score = 0;
+        let gameInterval;
+
+        // Game Logic
+        document.getElementById('start-game-btn')?.addEventListener('click', () => {
+            score = 0;
+            document.getElementById('game-score').textContent = '0';
+            document.getElementById('game-message').textContent = 'TAP!';
+            document.getElementById('game-button').disabled = false;
+            document.getElementById('save-score-btn')?.classList.add('hidden');
+            
+            let timeLeft = 10;
+            document.getElementById('game-timer').textContent = `${timeLeft}s`;
+            
+            gameInterval = setInterval(() => {
+                timeLeft--;
+                document.getElementById('game-timer').textContent = `${timeLeft}s`;
+                if (timeLeft <= 0) {
+                    clearInterval(gameInterval);
+                    document.getElementById('game-button').disabled = true;
+                    document.getElementById('game-message').textContent = `${score}`;
+                    document.getElementById('save-score-btn')?.classList.remove('hidden');
+                }
+            }, 1000);
+        });
+
+        document.getElementById('game-button')?.addEventListener('click', () => {
+            if (gameInterval) {
+                score++;
+                document.getElementById('game-score').textContent = score;
+                const btn = document.getElementById('game-button');
+                btn.style.transform = 'scale(0.9)';
+                setTimeout(() => btn.style.transform = 'scale(1)', 100);
+            }
+        });
+
+        document.getElementById('save-score-btn')?.addEventListener('click', saveScore);
+
+        // Firebase Init
+        async function initializeFirebase() {
+            if (!window.firebase || !firebaseConfig) {
+                console.warn("Firebase disabled");
+                document.getElementById('leaderboard-body').innerHTML = '<tr><td colspan="3" class="text-center py-4 text-gray-500">Leaderboard unavailable</td></tr>';
+                document.getElementById('current-user-id').textContent = 'N/A';
+                return;
+            }
+            
+            const { initializeApp, getFirestore, getAuth, setLogLevel, signInWithCustomToken, signInAnonymously, onAuthStateChanged } = window.firebase;
+
+            try {
+                const firebaseApp = initializeApp(firebaseConfig);
+                db = getFirestore(firebaseApp);
+                auth = getAuth(firebaseApp);
+                setLogLevel('error');
+
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (e) {
+                console.error("Firebase error:", e);
+                document.getElementById('current-user-id').textContent = 'Auth Failed';
+                document.getElementById('leaderboard-body').innerHTML = '<tr><td colspan="3" class="text-center py-4 text-gray-500">Auth failed</td></tr>';
+                return;
+            }
+
+            onAuthStateChanged(auth, (user) => {
+                currentUserId = user ? user.uid : (localStorage.getItem('anon_id') || crypto.randomUUID());
+                if (!user) localStorage.setItem('anon_id', currentUserId);
+                document.getElementById('current-user-id').textContent = currentUserId.substring(0, 8) + '...';
+                loadLeaderboard();
+            });
+        }
+
+        async function saveScore() {
+            if (!db || !auth.currentUser) {
+                alert("Cannot save score. Authentication failed.");
+                return;
+            }
+            
+            if (score === 0) {
+                alert("Score must be greater than 0!");
+                return;
+            }
+            
+            const { collection, addDoc, serverTimestamp } = window.firebase;
+            const path = `artifacts/${appId}/public/data/scores`;
+            const scoresRef = collection(db, path);
+            
+            const playerName = prompt("Enter your name (max 10 chars):") || "Anonymous";
+            const displayName = playerName.substring(0, 10);
+            
+            try {
+                await addDoc(scoresRef, {
+                    userId: currentUserId,
+                    name: displayName,
+                    score: score,
+                    timestamp: serverTimestamp()
+                });
+                document.getElementById('game-message').textContent = `Saved!`;
+                document.getElementById('save-score-btn').classList.add('hidden');
+            } catch (e) {
+                console.error("Error saving:", e);
+                alert("Error saving score");
+            }
+        }
+
+        function loadLeaderboard() {
+            if (!db) return;
+            
+            const { collection, onSnapshot } = window.firebase;
+            const path = `artifacts/${appId}/public/data/scores`;
+            const scoresRef = collection(db, path);
+
+            try {
+                onSnapshot(scoresRef, (snapshot) => {
+                    const scores = [];
+                    snapshot.forEach((doc) => {
+                        scores.push({ ...doc.data(), id: doc.id });
+                    });
+
+                    scores.sort((a, b) => (b.score || 0) - (a.score || 0));
+                    const topScores = scores.slice(0, 10);
+
+                    let html = '';
+                    if (topScores.length === 0) {
+                        html = '<tr><td colspan="3" class="text-center py-4 text-gray-500">No scores yet!</td></tr>';
+                    } else {
+                        topScores.forEach((s, index) => {
+                            const isCurrentUser = s.userId === currentUserId;
+                            const rowClass = isCurrentUser ? 'bg-purple-900/30' : (index % 2 === 0 ? 'bg-white/5' : 'bg-transparent');
+                            html += `
+                                <tr class="${rowClass} hover:bg-white/10 transition">
+                                    <td class="p-4 font-bold">#${index + 1}</td>
+                                    <td class="p-4 truncate">${s.name || 'Anonymous'}</td>
+                                    <td class="p-4 text-right font-bold text-purple-400">${s.score}</td>
+                                </tr>
+                            `;
+                        });
+                    }
+                    document.getElementById('leaderboard-body').innerHTML = html;
+                });
+            } catch (e) {
+                console.error("Leaderboard error:", e);
+            }
+        }
+
+        // YouTube API Functions
+        function formatNumber(num) {
+            const n = parseInt(num);
+            if (n >= 1000000) return (n / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+            if (n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+            return n.toLocaleString();
+        }
+
+        function animateValue(id, end) {
+            const element = document.getElementById(id);
+            const duration = 2000;
+            const startTime = performance.now();
+
+            function update(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const current = Math.floor(progress * parseInt(end));
+                element.textContent = formatNumber(current);
+                if (progress < 1) requestAnimationFrame(update);
+                else element.textContent = formatNumber(end);
+            }
+            requestAnimationFrame(update);
+        }
+
+        async function fetchChannelData() {
+            try {
+                const response = await fetch(`https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics&id=${CHANNEL_ID}&key=${API_KEY}`);
+                if (!response.ok) throw new Error('API Error');
+                
+                const data = await response.json();
+                const channel = data.items[0];
+                const stats = channel.statistics;
+                const snippet = channel.snippet;
+
+                animateValue('total-views', stats.viewCount);
+                animateValue('video-count', stats.videoCount);
+                
+                const subsEl = document.getElementById('subscriber-count');
+                const widgetSubsEl = document.getElementById('widget-subscriber-count');
+                if (stats.hiddenSubscriberCount) {
+                    subsEl.textContent = 'Hidden';
+                    widgetSubsEl.textContent = 'Subscribers Hidden';
+                } else {
+                    animateValue('subscriber-count', stats.subscriberCount);
+                    widgetSubsEl.textContent = formatNumber(stats.subscriberCount) + ' Subscribers';
+                }
+
+                if (snippet.thumbnails?.high?.url) {
+                    document.getElementById('channel-logo').src = snippet.thumbnails.high.url;
+                }
+
+                const shortsResponse = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${CHANNEL_ID}&maxResults=10&order=date&type=video&key=${API_KEY}`);
+                const shortsData = await shortsResponse.json();
+                
+                renderFeaturedShort(shortsData.items[0]);
+                renderShorts(shortsData.items.slice(0, 5)); // Display up to 5 latest shorts
+                
+                if (shortsData.items[0]) {
+                    fetchComments(shortsData.items[0].id.videoId);
+                }
+
+                const playlistsResponse = await fetch(`https://www.googleapis.com/youtube/v3/playlists?part=snippet&channelId=${CHANNEL_ID}&maxResults=4&key=${API_KEY}`);
+                const playlistsData = await playlistsResponse.json();
+                renderPlaylists(playlistsData.items);
+
+                fetchChannelReviews();
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('total-views').textContent = 'Error';
+                document.getElementById('subscriber-count').textContent = 'Error';
+                document.getElementById('video-count').textContent = 'Error';
+            }
+        }
+
+        function renderFeaturedShort(video) {
+            const container = document.getElementById('featured-short-container');
+            if (!video) {
+                container.innerHTML = '<p class="text-gray-400">No content available.</p>';
+                return;
+            }
+            
+            const videoId = video.id.videoId;
+            const title = video.snippet.title.replace(/\| Doodle Studio.*(Shorts)?/, '').trim();
+            const embedUrl = `https://www.youtube.com/embed/${videoId}?rel=0`;
+            
+            container.innerHTML = `
+                <div class="w-full max-w-md mx-auto pro-card rounded-2xl overflow-hidden border border-purple-500/30">
+                    <div class="aspect-[9/16] relative">
+                        <iframe class="absolute inset-0 w-full h-full" src="${embedUrl}" 
+                                 frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                 allowfullscreen></iframe>
+                    </div>
+                    <div class="p-4 bg-gradient-to-b from-transparent to-black/50">
+                        <p class="text-lg font-semibold text-gray-200">${title}</p>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('comment-youtube-link').href = `https://www.youtube.com/watch?v=${videoId}`;
+        }
+
+        function renderShorts(videos) {
+            const container = document.getElementById('latest-shorts-container');
+            container.innerHTML = ''; // Clear existing content (spinner)
+            if (!videos || videos.length === 0) {
+                container.innerHTML = '<p class="col-span-full text-gray-400 text-center">No latest creations available.</p>';
+                return;
+            }
+            
+            let html = '';
+            videos.forEach((item, index) => {
+                const videoId = item.id.videoId;
+                const title = item.snippet.title.replace(/\| Doodle Studio.*(Shorts)?/, '').trim();
+                const thumbnail = item.snippet.thumbnails.high.url;
+                const embedUrl = `https://www.youtube.com/watch?v=${videoId}`;
+                
+                html += `
+                    <a href="${embedUrl}" target="_blank" 
+                       class="group block pro-card rounded-xl overflow-hidden hover-scale reveal-element">
+                        <div class="aspect-[9/16] relative overflow-hidden">
+                            <img src="${thumbnail}" alt="${title}" 
+                                 class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent 
+                                         opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                            <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                <svg class="w-16 h-16 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M8 5v14l11-7z"/>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="p-3">
+                            <p class="text-sm font-semibold text-gray-300 group-hover:text-purple-400 transition-colors line-clamp-2">
+                                ${title}
+                            </p>
+                        </div>
+                    </a>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        function renderPlaylists(playlists) {
+            const container = document.getElementById('playlists-container');
+            const statusEl = document.getElementById('playlists-status');
+            if (statusEl) statusEl.remove(); // Remove the loading status
+            
+            if (!playlists || playlists.length === 0) {
+                container.innerHTML = '<p class="col-span-full text-center text-gray-400">No playlists available.</p>';
+                return;
+            }
+            
+            let html = '';
+            playlists.forEach(item => {
+                const playlistId = item.id;
+                const title = item.snippet.title.trim();
+                const thumbnail = item.snippet.thumbnails.high.url;
+                const playlistUrl = `https://www.youtube.com/playlist?list=${playlistId}`;
+                
+                html += `
+                    <a href="${playlistUrl}" target="_blank" 
+                       class="group block pro-card rounded-xl overflow-hidden hover-scale">
+                        <div class="aspect-video relative overflow-hidden">
+                            <img src="${thumbnail}" alt="${title}" 
+                                 class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+                            <div class="absolute bottom-0 left-0 right-0 p-4">
+                                <p class="text-lg font-semibold text-white group-hover:text-cyan-400 transition-colors">
+                                    ${title}
+                                </p>
+                            </div>
+                        </div>
+                    </a>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        async function fetchComments(videoId) {
+            try {
+                const response = await fetch(`https://www.googleapis.com/youtube/v3/commentThreads?part=snippet&videoId=${videoId}&key=${API_KEY}&order=relevance&maxResults=8`);
+                const data = await response.json();
+                renderComments(data.items);
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('comments-container').innerHTML = 
+                    '<p class="text-gray-400">Comments unavailable.</p>';
+            }
+        }
+
+        function renderComments(comments) {
+            const container = document.getElementById('comments-container');
+            if (!comments || comments.length === 0) {
+                container.innerHTML = '<p class="text-gray-500">No comments yet.</p>';
+                return;
+            }
+            
+            let html = '';
+            comments.forEach(item => {
+                const comment = item.snippet.topLevelComment.snippet;
+                const authorName = comment.authorDisplayName;
+                const authorImg = comment.authorProfileImageUrl;
+                const text = comment.textDisplay.length > 150 ? 
+                                comment.textDisplay.substring(0, 150) + '...' : 
+                                comment.textDisplay;
+                const date = new Date(comment.publishedAt).toLocaleDateString();
+                
+                html += `
+                    <div class="pro-card rounded-xl p-4 flex items-start space-x-4 hover-scale">
+                        <img src="${authorImg}" alt="${authorName}" 
+                             class="w-10 h-10 rounded-full border-2 border-purple-500/30">
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center justify-between mb-2">
+                                <p class="font-bold text-sm text-purple-400 truncate">${authorName}</p>
+                                <p class="text-xs text-gray-500 flex-shrink-0 ml-2">${date}</p>
+                            </div>
+                            <p class="text-gray-300 text-sm leading-relaxed">${text}</p>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        async function fetchChannelReviews() {
+            try {
+                const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${CHANNEL_ID}&maxResults=50&order=date&type=video&key=${API_KEY}`;
+                const searchResponse = await fetch(searchUrl);
+                const searchData = await searchResponse.json();
+                const videos = searchData.items || [];
+
+                if (videos.length === 0) {
+                    document.getElementById('reviews-status')?.remove();
+                    document.getElementById('reviews-container').innerHTML = '<p class="col-span-full text-center text-gray-400">No reviews yet.</p>';
+                    return;
+                }
+
+                const commentPromises = videos.slice(0, 20).map(video => { // Take up to 20 videos
+                    const videoId = video.id.videoId;
+                    const commentsUrl = `https://www.googleapis.com/youtube/v3/commentThreads?part=snippet&videoId=${videoId}&key=${API_KEY}&order=relevance&maxResults=20`; // Fetch more comments per video
+                    return fetch(commentsUrl).then(res => res.ok ? res.json() : null).catch(() => null);
+                });
+
+                const results = await Promise.all(commentPromises);
+                let allComments = [];
+                results.forEach(result => {
+                    if (result && result.items) {
+                        allComments = allComments.concat(result.items);
+                    }
+                });
+
+                const filteredComments = allComments.filter(item => {
+                    const snippet = item.snippet?.topLevelComment?.snippet;
+                    if (!snippet) return false;
+                    const authorChannelId = snippet.authorChannelId?.value;
+                    if (authorChannelId === CHANNEL_ID) return false;
+                    return snippet.textDisplay.length > 5; // Reduced minimum length to capture more Shorts comments
+                });
+
+                for (let i = filteredComments.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [filteredComments[i], filteredComments[j]] = [filteredComments[j], filteredComments[i]];
+                }
+                
+                const uniqueComments = [...new Map(filteredComments.map(item => [item.id, item])).values()];
+                renderReviews(uniqueComments.slice(0, 9)); // Display up to 9 unique comments
+            } catch (error) {
+                console.error('Error fetching reviews:', error);
+                document.getElementById('reviews-status')?.remove();
+                document.getElementById('reviews-container').innerHTML = '<p class="col-span-full text-center text-gray-400">Reviews unavailable.</p>';
+            }
+        }
+
+        function renderReviews(comments) {
+            const statusEl = document.getElementById('reviews-status');
+            if (statusEl) statusEl.remove();
+            
+            const container = document.getElementById('reviews-container');
+            if (!comments || comments.length === 0) {
+                container.innerHTML = '<p class="col-span-full text-center text-gray-400">No reviews yet.</p>';
+                return;
+            }
+
+            let html = '';
+            comments.forEach(item => {
+                const comment = item.snippet.topLevelComment.snippet;
+                const authorName = comment.authorDisplayName;
+                const authorImg = comment.authorProfileImageUrl;
+                const commentText = comment.textDisplay;
+                const videoId = comment.videoId;
+                const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
+
+                const truncatedText = commentText.length > 150 ? commentText.substring(0, 150) + '...' : commentText;
+
+                html += `
+                    <div class="pro-card rounded-2xl p-6 hover-scale">
+                        <div class="flex items-start space-x-4 mb-4">
+                            <img src="${authorImg}" alt="${authorName}" class="w-12 h-12 rounded-full border-2 border-purple-500/30">
+                            <div>
+                                <p class="font-bold text-yellow-400">${authorName}</p>
+                                <a href="${videoUrl}" target="_blank" class="text-xs text-gray-500 hover:text-cyan-400 transition">on a video</a>
+                            </div>
+                        </div>
+                        <blockquote class="text-gray-300 text-sm italic border-l-4 border-purple-500/30 pl-4">
+                            ${truncatedText}
+                        </blockquote>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        // Initialize everything
+        async function init() {
+            await Promise.all([
+                fetchChannelData(),
+                initializeFirebase()
+            ]);
+        }
+
+        init();
+    </script>
 </body>
 </html>
 

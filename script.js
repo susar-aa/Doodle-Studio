@@ -5,7 +5,7 @@ const providedFirebaseConfig = {
     projectId: "doodle-studio-1bbdc",
     storageBucket: "doodle-studio-1bbdc.firebasestorage.app",
     messagingSenderId: "282494504927",
-    appId: "1:282494504927:web:e0abb99050144472377e6a",
+    appId: "1:282494504927:web:e_0abb99050144472377e6a",
 };
 
 const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
@@ -148,26 +148,25 @@ async function fetchPlaylists(API_KEY, CHANNEL_ID) {
 }
 
 async function fetchChannelReviews(API_KEY, CHANNEL_ID) {
-    // 1. Get the 10 most recent videos to source comments from
-    const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${CHANNEL_ID}&maxResults=10&order=date&type=video&key=${API_KEY}`;
+    // 1. Get the 50 most recent videos (max allowed) to get the widest possible pool.
+    const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${CHANNEL_ID}&maxResults=50&order=date&type=video&key=${API_KEY}`;
     const searchResponse = await fetch(searchUrl);
     if (!searchResponse.ok) throw new Error('Failed to fetch latest videos for reviews');
     const searchData = await searchResponse.json();
     const videos = searchData.items || [];
 
-    if (videos.length === 0) return []; // No videos found
+    if (videos.length === 0) return [];
 
-    // 2. Create an array of promises to fetch comments for each video
+    // 2. Fetch up to 10 comments for each of those videos.
     const commentPromises = videos.map(video => {
         const videoId = video.id.videoId;
-        const commentsUrl = `https://www.googleapis.com/youtube/v3/commentThreads?part=snippet&videoId=${videoId}&key=${API_KEY}&order=relevance&maxResults=3`;
+        const commentsUrl = `https://www.googleapis.com/youtube/v3/commentThreads?part=snippet&videoId=${videoId}&key=${API_KEY}&order=relevance&maxResults=10`;
         return fetch(commentsUrl).then(res => res.ok ? res.json() : null).catch(() => null);
     });
 
-    // 3. Wait for all comment fetches to complete
     const results = await Promise.all(commentPromises);
 
-    // 4. Consolidate all valid comments into a single array
+    // 3. Consolidate all valid comments into a single array.
     let allComments = [];
     results.forEach(result => {
         if (result && result.items) {
@@ -175,19 +174,28 @@ async function fetchChannelReviews(API_KEY, CHANNEL_ID) {
         }
     });
 
-    // 5. Filter for more substantial comments
-    const filteredComments = allComments.filter(item => 
-        item.snippet?.topLevelComment?.snippet?.textDisplay.length > 25
-    );
+    // 4. Filter comments to get good quality reviews from viewers.
+    const filteredComments = allComments.filter(item => {
+        const snippet = item.snippet?.topLevelComment?.snippet;
+        if (!snippet) return false;
+        
+        // Exclude comments from the channel owner
+        const authorChannelId = snippet.authorChannelId?.value;
+        if (authorChannelId === CHANNEL_ID) return false;
 
-    // 6. Shuffle the comments for variety
+        // Further relaxed the filter to catch shorter, more common comments on Shorts.
+        return snippet.textDisplay.length > 10;
+    });
+
+    // 5. Shuffle the comments for variety.
     for (let i = filteredComments.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [filteredComments[i], filteredComments[j]] = [filteredComments[j], filteredComments[i]];
     }
     
-    // 7. Return up to 6 comments to display
-    return filteredComments.slice(0, 6);
+    // 6. Return up to 9 unique comments to display.
+    const uniqueComments = [...new Map(filteredComments.map(item => [item.id, item])).values()];
+    return uniqueComments.slice(0, 9);
 }
 
 
@@ -602,4 +610,5 @@ document.addEventListener('DOMContentLoaded', () => {
     if (gameButton) gameButton.addEventListener('click', recordHit);
     if (saveScoreBtn) saveScoreBtn.addEventListener('click', saveScore);
 });
+
 
