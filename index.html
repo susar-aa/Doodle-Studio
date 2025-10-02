@@ -812,6 +812,7 @@
 
         function animateValue(id, end) {
             const element = document.getElementById(id);
+            if (!element) return;
             const duration = 2000;
             const startTime = performance.now();
 
@@ -857,7 +858,7 @@
                 const shortsData = await shortsResponse.json();
                 
                 renderFeaturedShort(shortsData.items[0]);
-                renderShorts(shortsData.items.slice(0, 5)); // Display up to 5 latest shorts
+                renderShorts(shortsData.items.slice(0, 5));
                 
                 if (shortsData.items[0]) {
                     fetchComments(shortsData.items[0].id.videoId);
@@ -941,12 +942,14 @@
                 `;
             });
             container.innerHTML = html;
+            // After rendering, find the new elements and observe them
+            container.querySelectorAll('.reveal-element').forEach(el => revealObserver.observe(el));
         }
 
         function renderPlaylists(playlists) {
             const container = document.getElementById('playlists-container');
             const statusEl = document.getElementById('playlists-status');
-            if (statusEl) statusEl.remove(); // Remove the loading status
+            if (statusEl) statusEl.remove();
             
             if (!playlists || playlists.length === 0) {
                 container.innerHTML = '<p class="col-span-full text-center text-gray-400">No playlists available.</p>';
@@ -962,7 +965,7 @@
                 
                 html += `
                     <a href="${playlistUrl}" target="_blank" 
-                       class="group block pro-card rounded-xl overflow-hidden hover-scale">
+                       class="group block pro-card rounded-xl overflow-hidden hover-scale reveal-element">
                         <div class="aspect-video relative overflow-hidden">
                             <img src="${thumbnail}" alt="${title}" 
                                  class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
@@ -977,6 +980,8 @@
                 `;
             });
             container.innerHTML = html;
+            // After rendering, find the new elements and observe them
+            container.querySelectorAll('.reveal-element').forEach(el => revealObserver.observe(el));
         }
 
         async function fetchComments(videoId) {
@@ -1038,9 +1043,9 @@
                     return;
                 }
 
-                const commentPromises = videos.slice(0, 20).map(video => { // Take up to 20 videos
+                const commentPromises = videos.slice(0, 20).map(video => {
                     const videoId = video.id.videoId;
-                    const commentsUrl = `https://www.googleapis.com/youtube/v3/commentThreads?part=snippet&videoId=${videoId}&key=${API_KEY}&order=relevance&maxResults=20`; // Fetch more comments per video
+                    const commentsUrl = `https://www.googleapis.com/youtube/v3/commentThreads?part=snippet&videoId=${videoId}&key=${API_KEY}&order=relevance&maxResults=20`;
                     return fetch(commentsUrl).then(res => res.ok ? res.json() : null).catch(() => null);
                 });
 
@@ -1057,7 +1062,7 @@
                     if (!snippet) return false;
                     const authorChannelId = snippet.authorChannelId?.value;
                     if (authorChannelId === CHANNEL_ID) return false;
-                    return snippet.textDisplay.length > 5; // Reduced minimum length to capture more Shorts comments
+                    return snippet.textDisplay.length > 5;
                 });
 
                 for (let i = filteredComments.length - 1; i > 0; i--) {
@@ -1066,7 +1071,7 @@
                 }
                 
                 const uniqueComments = [...new Map(filteredComments.map(item => [item.id, item])).values()];
-                renderReviews(uniqueComments.slice(0, 9)); // Display up to 9 unique comments
+                renderReviews(uniqueComments.slice(0, 9));
             } catch (error) {
                 console.error('Error fetching reviews:', error);
                 document.getElementById('reviews-status')?.remove();
@@ -1096,7 +1101,7 @@
                 const truncatedText = commentText.length > 150 ? commentText.substring(0, 150) + '...' : commentText;
 
                 html += `
-                    <div class="pro-card rounded-2xl p-6 hover-scale">
+                    <div class="pro-card rounded-2xl p-6 hover-scale reveal-element">
                         <div class="flex items-start space-x-4 mb-4">
                             <img src="${authorImg}" alt="${authorName}" class="w-12 h-12 rounded-full border-2 border-purple-500/30">
                             <div>
@@ -1111,6 +1116,8 @@
                 `;
             });
             container.innerHTML = html;
+            // After rendering, find the new elements and observe them
+            container.querySelectorAll('.reveal-element').forEach(el => revealObserver.observe(el));
         }
 
         // Initialize everything
